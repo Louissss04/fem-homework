@@ -124,8 +124,8 @@
 		
 		的变分形式, 这里 $\partial \Omega=\Gamma_1 \cup \Gamma_2$, 且 $\Gamma_1 \cap \Gamma_2=\emptyset$. 并证明古典解和弱解在一定条件下等价.
 		
-		\begin{proof}
-			设$V = \{v\ | v \in H^1(\Omega), v|_{\Gamma_1} = 0\}$.
+		\begin{proof}[解]\let\qed\relax
+			设$V = \{v\ | v \in H^1(\Omega), \left.v\right|_{\Gamma_1} = 0\}$.
 			
 			对任意 $v \in V$, 用Green公式可得
 			$$
@@ -135,11 +135,39 @@
 			\end{aligned}
 			$$
 			
-			则问题\eqref{Possion}的变分形式是: 求 $u \in H^1(\Omega)$且$u|_{\Gamma_1} = g_1$ 使得
-			$$
-			a(u, v)=(f, v)+\int_{\Gamma_2} g v \mathrm{ds}, \quad \forall v \in V.
-			$$
-		\end{proof}
+			则问题\eqref{Possion}的变分形式是: 求 $u \in H^1(\Omega)$且$\left.u\right|_{\Gamma_1} = g_1$ 使得
+			\begin{equation}
+				a(u, v)=(f, v)+\int_{\Gamma_2} g_2 v \mathrm{ds}, \quad \forall v \in V.
+				\label{weak}
+			\end{equation}
+			
+	
+		
+	\end{proof}
+	
+	\begin{theorem}
+		设 $f \in C(\overline{\Omega}), g_1,g_2  \in C(\partial \Omega)$. 如果 $u \in C^2(\overline{\Omega})$ 是问题\eqref{Possion}的古典解, 则它是弱解. 反过来, 如果 $u$ 是问题\eqref{Possion}的弱解且 $u \in C^2(\overline{\Omega})$, 则它是古典解.
+	\end{theorem}
+	
+	\begin{proof}[证明]
+		第一个结论显然. 
+		
+		如果 $u$ 是问题\eqref{Possion}的弱解且 $u \in C^2(\overline{\Omega})$,立得$\left.u\right|_{\Gamma_1}=g_1$.
+		
+		第一步在\eqref{weak}中取 $v \in C_0^{\infty}(\Omega)$, 利用Green公式和 $\left.v\right|_{\partial \Omega}=0$ 得到
+		$$
+		\int_{\Omega}(\Delta u+f) v \mathrm{dx}=0 .
+		$$
+		
+		推出 $\Delta u+f=0$. 第二步在(4)中取 $v \in C^{\infty}(\overline{\Omega})$且$\left.v\right|_{\Gamma_1} = 0$, 注意到 $\Delta u+f=0$, 可得
+		$$
+		\int_{\Gamma_2} \frac{\partial u}{\partial n} v \mathrm{ds}=\int_{\Gamma_2} g_2 v \mathrm{ds}
+		$$
+		
+		由 $v$ 的任意性得到 $u$ 满足边界条件 $\left.\frac{\partial u}{\partial n}\right|_{\Gamma_2}=g_2$.
+		
+		三个条件均满足，故 $u$ 是古典解.
+	\end{proof}
 	\end{enumerate}
 	
 		
