@@ -1,0 +1,148 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.04.08}	
+	
+
+	\begin{enumerate}
+		\item 利用$Young$不等式证明$H\ddot{o}lder$不等式.
+		
+		\begin{theorem}{($Young$不等式)}
+			
+			设 $p>1, q>1$, 且 $\frac{1}{p}+\frac{1}{q}=1$, 则对 $\forall a, b \geq 0$, 有
+			\begin{equation} 
+				a b \leq \frac{a^p}{p}+\frac{b^q}{q} .\label{young}
+			\end{equation}
+		\end{theorem}
+		
+		\begin{theorem}{($H\ddot{o}lder$不等式)}
+		
+		对 $f \in L^p(\Omega), g \in L^q(\Omega), 1 \leqslant p, q \leqslant+\infty, \frac{1}{p}+\frac{1}{q}=1$, 有
+		\begin{equation}
+			\|f g\|_{0,1, \Omega} \leqslant\|f\|_{0, p, \Omega}\|g\|_{0, q, \Omega} .\label{holder}
+		\end{equation}
+		
+		
+		\end{theorem}
+		
+		\begin{proof}[证明]
+		
+		若 $\|f\|_{0, p, \Omega}=0$ (或 $\|g\|_{0, q, \Omega}=0$), 则$f(\boldsymbol{x}) = 0$(或 $g(\boldsymbol{x})=0$), a.e. $\boldsymbol{x} \in \Omega$, 进而 $f(\boldsymbol{x}) g(\boldsymbol{x})=0$, a.e. $\boldsymbol{x} \in \Omega$, 此时 \eqref{holder}左侧与右侧均为0, 成立.
+			
+		否则 $\|f\|_{0, p, \Omega} \neq 0,\|g\|_{0, q, \Omega} \neq 0$. 取 $a=\frac{|f(\boldsymbol{x})|}{\|f\|_{0, p, \Omega}}, b=\frac{|g(\boldsymbol{x})|}{\|g\|_{0, q, \Omega}}$, 代入 \eqref{young}式后两边在 $\Omega$ 上积分, 得到 
+		
+		\begin{equation*}
+			\begin{aligned}
+				\int_{\Omega}\frac{|f(\boldsymbol{x})|}{\|f\|_{0, p, \Omega}}\frac{|g(\boldsymbol{x})|}{\|g\|_{0, q, \Omega}} dx &\leq \frac{1}{p} \frac{\int_{\Omega}|f(\boldsymbol{x})|^p dx}{\|f\|_{0, p, \Omega}^p} + \frac{1}{q} \frac{\int_{\Omega}|g(\boldsymbol{x})|^q dx}{\|g\|_{0, q, \Omega}^q}\\
+				& = \frac{1}{p}+\frac{1}{q}\\
+				& = 1
+			\end{aligned} 
+		\end{equation*}
+		整理即得\eqref{holder}.
+		
+		\end{proof}
+		
+		\item 证明$W^{1,p}$是Banach空间.(利用$L^p$完备)
+		
+		\begin{proof}[证明]
+			
+			直接证明$W^{m,p}$是Banach空间.只要证明 $W^{m, p}(\Omega)$ 在Sobolev范数下是完备的.
+			
+			令 $\left\{v_j\right\} \subset W^{m, p}(\Omega)$ 是 Cauchy 列, 即 $\left\{D^\alpha v_j:|\alpha| \leq m\right\}$ 是 $L^p(\Omega)$ 中的 Cauchy 列. 由于 $L^p(\Omega)$ 是完备的, 从而存在 $v^\alpha \in L^p(\Omega)(|\alpha| \leq$ $m)$, 使得 $D^\alpha v_j \rightarrow v_\alpha$ 在 $L^p(\Omega)$ 中, 当 $j \rightarrow \infty$ 时. 余下只要证明 $v_\alpha=D^\alpha v$, 即 $\forall \varphi \in C_0^{\infty}(\Omega)$ ，
+			$$
+			\int_{\Omega} v_\alpha \cdot \varphi d x=(-1)^{|\alpha|} \int_{\Omega} v \cdot \partial^\alpha \varphi d x .
+			$$
+			
+			事实上,
+			$$
+			\begin{aligned}
+				\int_{\Omega} v_\alpha \cdot \varphi d x & =\lim _{j \rightarrow \infty} \int_{\Omega} D^\alpha v_j \cdot \varphi \mathrm{d} x \\
+				& =\lim _{j \rightarrow \infty}(-1)^{|\alpha|} \int_{\Omega} v_j \cdot \partial^\alpha \varphi d x=(-1)^{|\alpha|} \int_{\Omega} v \cdot \partial^\alpha \varphi d x.
+			\end{aligned}
+			$$
+		\end{proof}
+		
+		\item 设 $\Omega=(-1,1)$ ，
+		$$
+		f(x)=|x|= \begin{cases}x, & 0 \leq x<1 \\ -x, & -1<x<0\end{cases}
+		$$
+		
+		证明
+		$$
+		g(x)= \begin{cases}1, & 0<x<1 \\ -1, & -1<x<0\end{cases}
+		$$
+		
+		是 $f$ 的一阶广义导数.
+		
+		\begin{proof}[证明]
+			$\forall \varphi \in C_0^{\infty}(\Omega)$, 由分部积分,
+			$$
+			\begin{aligned}
+				\int_{-1}^1 f(x) \cdot \varphi^{\prime}(x) \mathrm{d} x & =\int_{-1}^0 f(x) \cdot \varphi^{\prime}(x) \mathrm{d} x+\int_0^1 f(x) \cdot \varphi^{\prime}(x) \mathrm{d} x \\
+				& =\int_{-1}^0 \varphi(x) \mathrm{d} x-\int_0^1 \varphi(x) \mathrm{d} x \\
+				& =-\int_{-1}^1 g(x) \varphi(x) \mathrm{d} x
+			\end{aligned}
+			$$
+			
+			其中
+			$$
+			g(x)=|x|= \begin{cases}1, & 0<x<1 \\ -1, & -1<x<0\end{cases}
+			$$
+			
+			显然$g$是局部Lesbegue可积函数,故$g$是$f$的一阶广义导数.
+		\end{proof}
+		
+		\item 推导Poisson方程的混合边值问题
+		\begin{equation} 
+			\left\{\begin{array}{l}
+				-\Delta u=f, \text { 在 } \Omega \text { 内 } \\
+				\left.u\right|_{\Gamma_1}=g_1 \\
+				\left.\frac{\partial u}{\partial n}\right|_{\Gamma_2}=g_2
+			\end{array}\right. \label{Possion}
+		\end{equation}
+		
+		
+		
+		的变分形式, 这里 $\partial \Omega=\Gamma_1 \cup \Gamma_2$, 且 $\Gamma_1 \cap \Gamma_2=\emptyset$. 并证明古典解和弱解在一定条件下等价.
+		
+		\begin{proof}
+			设$V = \{v\ | v \in H^1(\Omega), v|_{\Gamma_1} = 0\}$.
+			
+			对任意 $v \in V$, 用Green公式可得
+			$$
+			\begin{aligned}
+				& \int_{\Omega} \nabla u \cdot \nabla v \mathrm{dx}-\int_{\Gamma_2} \frac{\partial u}{\partial n} v \mathrm{ds}=\int_{\Omega} f v \mathrm{dx} \\
+				& \Rightarrow \int_{\Omega} \nabla u \cdot \nabla v \mathrm{dx}=\int_{\Omega} f v \mathrm{dx}+\int_{\Gamma_2} g v \mathrm{ds}
+			\end{aligned}
+			$$
+			
+			则问题\eqref{Possion}的变分形式是: 求 $u \in H^1(\Omega)$且$u|_{\Gamma_1} = g_1$ 使得
+			$$
+			a(u, v)=(f, v)+\int_{\Gamma_2} g v \mathrm{ds}, \quad \forall v \in V.
+			$$
+		\end{proof}
+	\end{enumerate}
+	
+		
+	
+\end{document}
+
