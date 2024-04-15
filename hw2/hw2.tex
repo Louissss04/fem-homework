@@ -1,0 +1,228 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.04.15}	
+	
+	
+	\begin{enumerate}
+		\item 推导		
+		$
+		\displaystyle \int_\Omega v\Delta^2u\mathrm{~dx}-\displaystyle \int_\Omega\Delta u\Delta v\mathrm{~dx}
+		$
+		边界项
+		
+		\begin{proof}[解]\let\qed\relax
+			给定 $u,v\in H^1(\Omega)$, 根据Green 公式：对 $1\leqslant i\leqslant n$,
+			\begin{equation}
+				\int_{\Omega}u\partial_{i}v\mathrm{d}\boldsymbol{x}=-\int_{\Omega}v\partial_{i}u\mathrm{d}\boldsymbol{x}+\int_{\Gamma}uvn_{i}\mathrm{d}s\label{green1}
+			\end{equation}
+			
+			若$u\in H^2(\Omega),\quad v\in H^1(\Omega)$,则可用 $\partial_{i}u$ 代替\eqref{green1}式中的 $u$,可得
+			
+			$$
+			\int_{\Omega}\partial_{i}u\partial_{i}v\mathrm{d}\boldsymbol{x}=-\int_{\Omega}v\partial_{ii}u\mathrm{d}\boldsymbol{x}+\int_{\Gamma}\partial_{i}uvn_{i}\mathrm{d}s
+			$$
+			
+			对 $i$ 从 1 到 $n$ 求和可得
+			\begin{equation}
+				\int_{\Omega}\nabla u\nabla v\mathrm{d}\boldsymbol{x}=-\int_{\Omega}v\Delta u\mathrm{d}\boldsymbol{x}+\int_{\Gamma}v\frac{\partial u}{\partial n}\mathrm{d}s\label{green2}
+			\end{equation}
+			
+			若$v\in H^2(\Omega),\quad u\in H^1(\Omega)$,类似地有
+			\begin{equation}
+				\int_{\Omega}\nabla u\nabla v\mathrm{d}\boldsymbol{x}=-\int_{\Omega}u\Delta v\mathrm{d}\boldsymbol{x}+\int_{\Gamma}u\frac{\partial v}{\partial n}\mathrm{d}s\label{green3}
+			\end{equation}
+			
+			则当$u, v\in H^2(\Omega)$,\eqref{green2}\eqref{green3}两式相减，得：
+			\begin{equation}
+				\int_{\Omega}\big(u\Delta v-v\Delta u\big)\mathrm{d}\boldsymbol{x}=\int_{\Gamma}\big(u\frac{\partial v}{\partial n}-v\frac{\partial u}{\partial n}\big)\mathrm{d}s,\forall u,v\in H^{2}(\Omega)\label{green4}
+			\end{equation}
+			
+			若$u\in H^{4}(\Omega),v\in H^{2}(\Omega).$, 则可用 $\Delta u$ 代替\eqref{green4}中的 $u$, 可得
+			
+			$$
+			\int_\Omega\Delta u\Delta v\mathrm{d}\boldsymbol{x}=\int_\Omega v\Delta^2u\mathrm{d}\boldsymbol{x}-\int_\Gamma v\frac{\partial\Delta u}{\partial n}\mathrm{d}s+\int_\Gamma\Delta u\frac{\partial v}{\partial n}\mathrm{d}s
+			$$
+			
+		\end{proof}
+		
+		\item 
+		当双线性型$a(\cdot,\cdot)$对称时，利用$a(\cdot,\cdot)$可定义$V$上的新内积和Riesz表示定理证明Lax-Milgram定理(根据注的提示)
+		
+		\begin{theorem}(Lax-Milgram 定理)
+			
+			设$V$ 是一个 Hilbert 空间，$a(u,v)$ 是$V\times V$ 上的对称、连续、强制的双线性形式，$f$ 是$V$ 中的线性连续泛函，则变分问题
+			$$\text{求 }u\in V,\text{ 使得 }a(u,v)=\langle f,v\rangle,\quad\forall v\in V,$$
+			
+			存在唯一解$u^*$,且满足范数估计
+			
+			$$
+			\left\|u^*\right\|_V\leqslant\frac{1}{\alpha}\left\|f\right\|_{V^*},
+			$$
+
+		\end{theorem}
+		
+		\begin{proof}[证明]
+			因 $a(u,v)$ 是对称、正定的，故可在$V$ 上定义新内积 $[u,v]\triangleq a(u,v)$, 且
+			
+			$$
+			\alpha{\left\|u\right\|}_{V}^{2}\leqslant\left[u,u\right]\leqslant M{\left\|u\right\|}_{V}^{2},
+			$$
+			
+			其中左侧由强制性,右侧由连续性.
+			
+			新定义的内积所确定的范数 $\sqrt{a(u,u)}$ 与范数 $\|\cdot\|_V$ 等价. 对于 $V$ 的新范数$\sqrt{a(u,u)}$ 而言 $f$ 仍是线性连续泛函. 根据 Riesz 表示定理可知，存在唯一的 $u^*\in V$ 使得
+			
+			$$
+			[u^*,v]=\left\langle f,v\right\rangle,\quad\forall\:v\in V,
+			$$
+			
+			即
+			
+			$$
+			a(u^*,v)=\langle f,v\rangle,\quad\forall\:v\in V.
+			$$
+			
+			于是 $u^*$ 就是变分问题的唯一解.另一方面
+			
+			$$
+			\alpha\|u^*\|_V^2\leqslant a(u^*,u^*)=[u^*,u^*]=\langle f,u^*\rangle\leqslant\|f\|_{V^*}\|u^*\|_V.
+			$$
+			
+			从而得到范数估计.
+		\end{proof}
+		
+		\item 证明Poincaré不等式
+		\begin{equation}
+			\|v\|_{m,\Omega}^2\leq k\Big(|v|_{m,\Omega}^2+\sum_{|\alpha|<m}\Big(\int_\Omega\partial^\alpha v\mathrm{dx}\Big)^2\Big),\forall v\in H^m(\Omega),\label{poincare}
+		\end{equation}
+		
+		\begin{proof}[证明]
+			利用反证法. 假设\eqref{poincare}不成立. 对每个正整数$k$, 存在$v_k\in H^m(\Omega)$使
+			
+			$$
+			\|v_k\|^2_{m,\Omega}>C_2\Big(|v_k|_{m,\Omega}^2+\sum_{|\alpha|<m}\Big(\int_\Omega\partial^\alpha v_k\mathrm{dx}\Big)^2\Big).
+			$$
+			
+			不失一般性，设$v_k$满足
+			
+			$$
+			\left\|v_k\right\|_{m,\Omega}=1,\:k=1,2,\cdots,
+			$$
+			
+			这样有
+			
+			$$
+			\lim_{k\to\infty}|v_k|_{m,\Omega}=0.
+			$$
+			$$
+			\lim_{k\to\infty}\int_\Omega\partial^\alpha v_k\mathrm{dx} = 0, \quad \forall \alpha \quad s.t. |\alpha|<m
+			$$
+			
+			因为$\{v_k\}$是$H^m(\Omega)$的有界序列，所以存在$v_\infty\in H^m(\Omega)$和一个子列(仍记为$\{v_k\})$满足：$\{v_k\}$弱收敛于$v_\infty$. 利用嵌入定理$H^m(\Omega)\overset{c}{\operatorname*{\hookrightarrow}}H^{m-1}(\Omega)$,
+			在$H^{m-1}(\Omega)$中$\{v_k\}$强收敛于$v_{\infty}.$
+			
+			于是
+			
+			$$
+			\lim_{k,\ell\to\infty}\|v_k-v_\ell\|_{m,\Omega}\leq\lim_{k,\ell\to\infty}\left(\|v_k-v_\ell\|_{m-1,\Omega}+|v_k-v_\ell|_{m,\Omega}\right)=0.
+			$$
+			因此$\{v_k\}$是$H^m(\Omega)$中的Cauchy序列，进而$\{v_k\}$在$H^m(\Omega)$中强收敛于$v_\infty.$ 由极限得到$\|v_\infty\|_{m,\Omega}=1$和$|v_\infty|_{m,\Omega}=0$, 即$v_{\infty}$是一个$m-1$次多项式. 
+			
+			注意到
+			$$
+			\int_\Omega\partial^\alpha v_\infty \mathrm{dx} = 0, \quad \forall \alpha \quad s.t. \ |\alpha|<m
+			$$,
+			
+			可得$v_\infty\equiv0$.与$v_\infty\neq0$矛盾.上面讨论可推出Poincaré不等式成立.
+			
+			
+		\end{proof}
+		
+		\item 考虑Robin边值问题
+		\begin{equation}
+			\begin{cases}-\Delta u+\alpha(x)u=f,\text{ 在}\Omega \text{上}\\(\frac{\partial u}{\partial n}+\beta(x)u)\left.\right|_{\partial\Omega}=g&\end{cases}
+			\label{robin}
+		\end{equation}
+		
+		
+		这里$\alpha(x)\geq\alpha_0>0,\beta(x)\geq0$以及$f$均为足够光滑的已知函数
+		
+		\begin{enumerate}
+			\item[(i)]   试建立该边值问题的变分问题
+			\item[(ii)]  讨论变分问题解的存在唯一性(适定性)
+		\end{enumerate}
+		\begin{proof}[解]\let\qed\relax
+			\begin{enumerate}
+				\item[(i)] 
+				
+				对任意 $v \in H^1(\Omega)$, 用Green公式可得
+				$$
+				\begin{aligned}
+					& \int_{\Omega} \nabla u \cdot \nabla v + \alpha(x)uv \mathrm{dx}-\int_{\partial \Omega} \frac{\partial u}{\partial n} v \mathrm{ds}=\int_{\Omega} f v \mathrm{dx} \\
+					& \Rightarrow  \int_{\Omega} \nabla u \cdot \nabla v + \alpha(x)uv \mathrm{dx}+\int_{\partial \Omega}\beta(x)uv \mathrm{ds}=\int_{\Omega} f v \mathrm{dx} + \int_{\partial \Omega} gv \mathrm{ds}
+				\end{aligned}
+				$$
+				
+				则问题\eqref{robin}的变分形式是: 求 $u \in H^1(\Omega)$ 使得
+				\begin{equation}
+					a(u, v)=(f, v)+\int_{\partial \Omega} gv \mathrm{ds}, \quad \forall v \in V.
+					\label{weak}
+				\end{equation}
+				
+				其中$a(u, v):= \int_{\Omega} \nabla u \cdot \nabla v + \alpha(x)uv \mathrm{dx}+\int_{\partial \Omega}\beta(x)uv \mathrm{ds}$.
+				
+				\item[(ii)] 只需要验证Lax-Milgram定理的条件：
+				\begin{equation*}
+					\begin{aligned}
+						a(u,u) &= \int_{\Omega} (\nabla u)^2 + \alpha(x)u^2 \mathrm{dx}+\int_{\partial \Omega}\beta(x)u^2 \mathrm{ds}\\
+						&\geqslant \int_{\Omega} (\nabla u)^2 + \alpha(x)u^2 \mathrm{dx}\\
+						&\geqslant \min\{1,\alpha_0\} \|u\|_{1,\Omega}^2
+					\end{aligned}
+				\end{equation*}
+				从而$a(u,v)$满足强制性
+				
+				\begin{equation*}
+					\begin{aligned}
+						|a(u,v)|&\leqslant\left|u\right|_{1,\Omega}\cdot\left|v\right|_{1,\Omega}+\sup_{\boldsymbol{x}\in\Omega}\alpha(\boldsymbol{x})\cdot\left\|u\right\|_{0,\Omega}\cdot\left\|v\right\|_{0,\Omega}+\sup_{\boldsymbol{x}\in\Omega}\beta(\boldsymbol{x})\cdot\left\|u\right\|_{0,\partial \Omega}\cdot\left\|v\right\|_{0,\partial \Omega}\\
+						&\leqslant (1+\sup_{\boldsymbol{x}\in\Omega} \alpha(\boldsymbol{x})+\sup_{\boldsymbol{x}\in\Omega} \beta(\boldsymbol{x}))\|u\|_{1,\Omega}\cdot\|v\|_{1,\Omega},\quad\forall u,v\in V
+					\end{aligned}
+				\end{equation*}
+				其中上式第一行用到了柯西积分不等式，第二行用到了范数性质以及迹定理.从而$a(u,v)$满足连续性.
+			$$
+			\left|\int_\Omega fv\mathrm{dx}\right|\leq\left\|f\right\|_{0,\Omega}\left\|v\right\|_{0,\Omega}\leq\left\|f\right\|_{0,\Omega}\left\|v\right\|_{1,\Omega}
+			$$
+			$$
+			\left|\int_{\Omega}gv\mathrm{ds}\right|\leq\left\|g\right\|_{0,\partial\Omega}\left\|v\right\|_{0,\partial\Omega}\leq C\left\|g\right\|_{0,\partial\Omega}\left\|v\right\|_{1,\Omega}
+			$$
+			从而得到右端泛函有界性.
+			
+			综上，利用Lax-Milgram定理，变分问题\eqref{weak}的解存在且唯一.
+			\end{enumerate}
+		\end{proof}
+		
+	\end{enumerate}
+	
+	
+	
+\end{document}
+
