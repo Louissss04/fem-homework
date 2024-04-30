@@ -1,0 +1,134 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.04.29}	
+	
+	\begin{enumerate}
+		\item 证明任意次的张量积元是唯一可解的. 其中 $P_K=Q_k(K), \mathcal{N}_K$ 是下面 $(k+1)^2$ 个点的值
+		$$
+		\left(x_1^0+h_1\left(\frac{2 i}{k}-1\right), x_2^0+h_2\left(\frac{2 j}{k}-1\right)\right), 0 \leq i, j \leq k
+		$$
+		
+		其中 $\left(x_1^0, x_2^0\right)$ 是矩形的形心, $2 h_1, 2 h_2$ 分别是长和宽.
+		
+		\begin{proof}[证明]
+			记 $	\left(x_1^0+h_1\left(\frac{2 i}{k}-1\right), x_2^0+h_2\left(\frac{2 j}{k}-1\right)\right),0 \leq i, j \leq k$
+			为$x_{ij}$. 记$x_{ij}(0 \leq j \leq k)$所在的直线为$L_i$($0 \leq i \leq k-1$). 记$x_{ij}(0 \leq i \leq k)$所在的直线为$L^\prime_j$($0 \leq j \leq k-1$). 
+			
+			则由$v(x_{ij})=0$可得$v|_{L_i}=0,v|_{L^\prime_j}=0 \ (0 \leq i, j \leq k)$,
+			
+			从而$v=cL_0L_1 L_2...L_{k-1} L^\prime_0 L^\prime_1...L^\prime_{k-1}$,其中$c$是常数.利用
+			
+			$$
+			0 = v(x_{kk})=cL_0(x_{kk})L_1(x_{kk}) L_2(x_{kk})...L_{k-1}(x_{kk}) L^\prime_0 L^\prime_1(x_{kk})...L^\prime_{k-1}(x_{kk})
+			$$
+			
+			可得$c = 0$.
+		\end{proof}
+		
+		\item 证明Sobolev空间范数等价定理: 给定次数 $\leq k(k \geq 0)$ 的多项式全体 $P_k(\Omega), N=\operatorname{dim} P_k(\Omega)$, 又设 $f_i \in\left(W^{k+1, p}(\Omega)\right)^{\prime}, \quad i=1,2, \cdots, N$, $1 \leq p \leq \infty$, 使得当 $f_i(q)=0, \forall 1 \leq i \leq N, q \in P_k(\Omega)$ 时, 就有 $q=0$, 则存在 $C_{\Omega}=$ const $>0$, 使得
+		$$
+		\|v\|_{k+1, p, \Omega} \leq C_{\Omega}\left(|v|_{k+1, p, \Omega}+\sum_{i=1}^N\left|f_i(v)\right|\right), \forall v \in W^{k+1, p}(\Omega) .
+		$$
+		
+		Hint: 仿照第二次课Poincaré-Friedrichs不等式的反证法证明.
+		
+		\begin{proof}[证明]
+			假设命题不成立, 则存在一个序列 $\left\{v_i\right\}_{i=1}^{+\infty}, v_i \in W^{k+1, p}(\Omega)$, 使得
+			
+			\begin{equation}
+					\left\|v_i\right\|_{k+1, p, \Omega}=1, \quad \forall i \geqslant 1 \label{norm}
+			\end{equation}
+			
+			及
+			
+			\begin{equation}
+				\lim _{i \rightarrow \infty}\left(\left|v_i\right|_{k+1, p, \Omega}+\sum_{j=1}^N\left|f_j\left(v_i\right)\right|\right)=0. \label{eqnorm}
+			\end{equation}
+			
+			因为序列 $\left\{v_i\right\}_{i=1}^{+\infty}$ 在 $W^{k+1, p}(\Omega)$ 中有界, 以及 $W^{k+1, p}(\Omega) \stackrel{c}{\hookrightarrow} W^{k, p}(\Omega)$, 由嵌入定理可知, 在 $\left\{v_i\right\}_{i=1}^{+\infty}$ 中存在一个子序列, 仍记为 $\left\{v_i\right\}_{i=1}^{+\infty}$, 以及 $v \in W^{k, p}(\Omega)$, 使得
+			
+			\begin{equation}
+				\lim _{i \rightarrow \infty}\left\|v_i-v\right\|_{k, p, \Omega}=0 .
+			\end{equation}
+			
+			又由 \eqref{eqnorm}, 有
+			
+			\begin{equation}
+				\lim _{i \rightarrow \infty}\left|v_i\right|_{k+1, p, \Omega}=0. 
+			\end{equation}
+			
+			故 $\left\{v_i\right\}_{i=1}^{+\infty}$ 为 $W^{k+1, p}(\Omega)$ 中的 Cauchy 序列, 而 $W^{k+1, p}(\Omega)$ 是完备的, 因此 $\left\{v_i\right\}_{i=1}^{+\infty}$ 在 $W^{k+1, p}(\Omega)$ 中收敛, 从而序列 $\left\{v_i\right\}_{i=1}^{+\infty}$ 的极限 $v$ 满足:
+			
+			\begin{equation}
+					\left|D^\alpha v\right|_{0, p, \Omega}=\lim _{j \rightarrow \infty}\left|D^\alpha v_j\right|_{0, p, \Omega}=0, \quad \forall \alpha \in \mathbb{Z}_{+}^n,|\alpha|=k+1 .
+			\end{equation}
+
+			
+			由此可知 $v$ 是一个次数不超过 $k$ 的多项式. 由 \eqref{eqnorm} 还可知
+			
+			\begin{equation}
+					f_j(v)=\lim _{i \rightarrow \infty} f_j\left(v_i\right)=0, \quad j=1,2, \cdots, N .
+			\end{equation}
+			
+			据定理的条件可知, $v=0$. 这与 \eqref{norm} 式发生了矛盾.
+			证毕
+	
+		\end{proof}
+		
+		\item 假设仿射变换 $F: \widehat{K} \rightarrow K$. 并且 $\partial K$ 是光滑的（保证法向导数是存在且就有一定的光滑性）. 证明一下通过如下的变换
+		$$
+		\nu=\frac{B^{-T} \widehat{\nu}}{\left\|B^{-T} \widehat{\nu}\right\|}
+		$$
+		
+		保单位外法向
+		
+		\begin{proof}[证明]
+			设法向量$\widehat{\nu}=(\widehat{\nu}_1,\widehat{\nu}_2,...,\widehat{\nu}_n)^\top$.则与其正交的平面上面的点$\widehat{\boldsymbol{x}}=(x_1,x_2,...,x_n)^\top$满足$\widehat{\nu}^\top \widehat{\boldsymbol{x}}=C$($C$为常数).
+			
+			进而有$\widehat{\nu}^\top B^{-1} (B\widehat{\boldsymbol{x}}+b)=C$,即$(B^{-T} \widehat{\nu})^\top \boldsymbol{x}=C$,其中$\boldsymbol{x}$是$\widehat{\boldsymbol{x}}$经过仿射变换得到的对应点.
+			
+			经过归一化,易得$
+			\nu=\frac{B^{-T} \widehat{\nu}}{\left\|B^{-T} \widehat{\nu}\right\|}
+			$保单位法向.
+			
+			下面只需证其是外法向,反证法,假设$
+			\nu=-\frac{B^{-T} \widehat{\nu}}{\left\|B^{-T} \widehat{\nu}\right\|}
+			$是外法向:
+			
+			当 $t>0$ 足够小时, 因为 $\nu$ 是外法向量, 所以 $\boldsymbol{x}+t \nu \notin K$. 这样就有
+			$$
+			\Psi^{-1}(\boldsymbol{x}+t \nu)=\widehat{\boldsymbol{x}}-t \frac{B^{-1} B^{-{T}} \widehat{\nu}}{\left\|B^{-{T}} \widehat{\nu}\right\|} \notin \hat{K} .
+			$$
+			
+			另一方面,
+			$$
+			\frac{\hat{\nu}^{{T}} {B}^{-1} {B}^{-{T}} \widehat{{\nu}}}{\left\|{B}^{-{T}} \widehat{{\nu}}\right\|}>0
+			$$
+			
+			即 $\hat{\nu}$ 和 $\frac{B^{-1} B^{-\mathrm{T}} \hat{\nu}}{\left\|B^{-\mathrm{T}} \hat{\nu}\right\|}$ 之间的夹角小于 $\frac{\pi}{2}$, 进而 $\hat{\nu}$ 和 $-t \frac{B^{-1} B^{-\mathrm{T}} \hat{\nu}}{\left\|B^{-\mathrm{T}} \hat{\nu}\right\|}$ 之间的夹角大于 $\frac{\pi}{2}$. 这样就得到当 $t$ 足够小时, $\hat{\boldsymbol{x}}-t \frac{{B}^{-1} {B}^{-{T}} \hat{{\nu}}}{\left\|{B}^{-{T}} \hat{{\nu}}\right\|} \in K$, 矛盾.
+		\end{proof}
+	\end{enumerate}
+	
+	
+\end{document}
+
