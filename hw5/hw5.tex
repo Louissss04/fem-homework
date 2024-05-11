@@ -1,0 +1,63 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.05.06}	
+	
+	\begin{enumerate}
+		\item 设$\{a_m\}_{m=1}^\infty$是非负序列.证明对任意$1\leq q\leq p$,有
+		$$(\sum_{m=1}^\infty a_m^p)^{1/p}\leq(\sum_{m=1}^\infty a_m^q)^{1/q}$$
+		
+		\begin{proof}
+			记 $\|a\|_p\triangleq (\sum_{m=1}^\infty a_m^p)^{1/p}$. 即证$\|a\|_p \leq \|a\|_q$
+			
+			对$p \leq \infty$,有$\|a\|_p = (\sum_{m=1}^\infty a_m^p)^{1/p} \geq \max a_m = \|a\|_\infty$.
+			
+			因此,有$|a_m|^q=|a_m|^p|a_m|^{q-p}\leq|a_m|^p  \|a\|_\infty^{q-p} \leq|a_m|^p\|a\|_p^{q-p}$
+			
+			对上式求和，得到$\sum_{m=1}^\infty a_m^q \leq \|a\|_p^{q-p} \sum_{m=1}^\infty a_m^p$
+			
+			两端同时开$q$次方即可.
+		\end{proof}
+		\item 设$\{a_m\}_{m=1}^M$是有限非负序列.证明如果$p<q\leq\infty$,则有
+		$$(\sum_{m=1}^Ma_m^p)^{1/p}\leq M^{1/p-1/q}(\sum_{m=1}^Ma_m^q)^{1/q}\text{ 如果}q<\infty$$
+		
+		$$(\sum_{m=1}^Ma_m^p)^{1/p}\leq M^{1/p}\max_{1\leq m\leq M}a_m\text{ 如果}q=\infty $$
+		
+		\begin{proof}
+			第二种情况显然，只需要注意$a_m \leq \max_{1\leq m\leq M}a_m, \forall m$.
+			
+			考虑第一种情况，根据$H\ddot{o}lder$不等式，有
+			
+			$$\sum_{m=1}^M a_m^p = \sum_{m=1}^M (a_m^p \times 1) \leq \left(\sum_{m=1}^M {a_m}^{p\times \frac{q}{p}}\right)^\frac{p}{q} \left(\sum_{m=1}^M 1^{\frac{q}{q-p}}\right)^{\frac{q-p}{q}}=M^{\frac{q-p}{q}} \left(\sum_{m=1}^M a_m^{q}\right)^\frac{p}{q}$$
+			
+			两端开$p$次方即可.
+		\end{proof}
+		
+		\begin{theorem}[$H\ddot{o}lder$不等式的离散形式]
+			设 $p>1$ , $\frac{1}{p}+\frac{1}{q}=1$. 令$a_1,\ldots a_n$ 和$b_1,\ldots,b_n$ 是非负实数.那么
+			$$\sum_{i=1}^na_ib_i\leq\left(\sum_{i=1}^na_i^p\right)^{\frac1p}\left(\sum_{i=1}^nb_i^q\right)^{\frac1q}$$
+		\end{theorem}
+	\end{enumerate}
+	
+	
+\end{document}
+
