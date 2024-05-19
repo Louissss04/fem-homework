@@ -1,0 +1,152 @@
+#!/usr/bin/bc -lq
+#
+# 2D functions
+#
+# $Id: 2Dfuncs.bc,v 1.10 2020/04/01 10:22:48 zlb Exp $
+
+nstars = 0
+npoints = 0
+ncoord = 0
+nweights = 0
+nmono = 0
+
+define perm0(a, b) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    constraints[ncoord] = -1
+    absc[ncoord++] = b
+    stars[nstars++] = 0
+    npoints += 1
+}
+define perm30(a,b) {dummy = perm0(a,b)}
+
+define perm3(a) {
+    stars[nstars++] = 3
+    npoints += 1
+}
+
+define perm21(a) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    stars[nstars++] = 21
+    npoints += 3
+}
+
+define cons21(a) {
+    if (!fullcons) {if (a<10^(-10)) {a=0} else {a=0.5}}
+    constraints[ncoord] = a
+    absc[ncoord++] = a
+    stars[nstars++] = 21
+    npoints += 3
+}
+
+define perm111(a, b) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    constraints[ncoord] = -1
+    absc[ncoord++] = b
+    stars[nstars++] = 111
+    npoints += 6
+}
+
+define cons111(a, b) {
+    if (fullcons) {
+	constraints[ncoord] = a
+	absc[ncoord++] = a
+	constraints[ncoord] = b
+    } else {
+	a = 0
+	constraints[ncoord] = a
+	absc[ncoord++] = a
+	constraints[ncoord] = -1
+    }
+    absc[ncoord++] = b
+    stars[nstars++] = 111
+    npoints += 6
+}
+
+define dup0(a) {wgts[nweights++] = a * vol; symmetry = 0}
+define dup3(a) {wgts[nweights++] = a * vol}
+define dup21(a) {wgts[nweights++] = a * vol}
+define dup111(a) {wgts[nweights++] = a * vol}
+
+define cons1(a) {t = cons21(0)}
+define dup1(a) {t = dup21(a)}
+
+define cons2(a) {t = cons21(0.5)}
+define dup2(a) {t = dup21(a)}
+
+define cons11(a) {t = cons111(0,a)}
+define dup11(a) {t = dup111(a)}
+
+define sm(a,b,c) {
+    monos[3 * nmono + 0] = a;
+    monos[3 * nmono + 1] = b;
+    monos[3 * nmono + 2] = c;
+    nmono = nmono + 1
+}
+
+define mono3(a) {t = sm(a,a,a)}
+define mono21(a,b) {t = sm(a,a,b)}
+define mono111(a,b,c) {t = sm(a,b,c)}
+
+define init(order) {
+    /* computes orders and integrals of the basis polynomials */
+    auto i, j, p, q, r, n, a, b, c
+
+    if (nmono > 0) symmetry = 0
+
+    n = 0
+    /* loop on homogeneous monomials of order p */
+    for (p = order; p >= 0; p--) {
+	q = order - p
+	if (symmetry && q > p) q = p
+	for (; q >= 0 && (!symmetry || q >= order - p - q); q--) {
+	    r = order - p - q
+	    if (nmono == 0) {
+		/* use homogeneous monomials of order p */
+		orders[3 * n + 0] = p
+		orders[3 * n + 1] = q
+		orders[3 * n + 2] = r
+		n = n + 1
+		continue
+	    }
+	    /* {homogeneous monomials of order p} \otimes monos[] */
+	    for (i = 0; i < nmono; i++) {
+		a = p + monos[i * 3 + 0]
+		b = q + monos[i * 3 + 1]
+		c = r + monos[i * 3 + 2]
+		/* sort (a,b,c) */
+		if (a < b) {t = a; a = b; b = t}
+		if (a < c) {t = a; a = c; c = t}
+		if (b < c) {t = b; b = c; c = t}
+		for (j = 0; j < n; j++)
+		    if (a == orders[j * 3 + 0] && \
+			b == orders[j * 3 + 1] && \
+			c == orders[j * 3 + 2])
+			break 
+		if (j < n) continue
+		orders[n * 3 + 0] = a
+		orders[n * 3 + 1] = b
+		orders[n * 3 + 2] = c
+		n = n + 1
+	    }
+	}
+    }
+
+    if (nmono > 0) symmetry = 1
+
+    /* compute integrals of the bases */
+    for (j = 0; j < n; j++) {
+	p = orders[3 * j + 0]
+	q = orders[3 * j + 1]
+	r = orders[3 * j + 2]
+	/* compute \int_T x^p y^q (1-x-y)^r dxdy */
+	a = 1. / ((p + q + r + 1) * (p + q + r + 2))
+	for (i = q; i > 0; i--) a *= i / (p + i + r)
+	for (i = r; i > 0; i--) a *= i / (p + i)
+	integr[j] = a
+    }
+
+    return n
+}

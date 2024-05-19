@@ -1,0 +1,60 @@
+#!/usr/bin/bc -lq
+#
+# 1D functions
+#
+# $Id: 1Dfuncs.bc,v 1.7 2020/02/12 08:03:03 zlb Exp $
+
+nstars = 0
+npoints = 0
+ncoord = 0
+nweights = 0
+
+define perm0(a) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    stars[nstars++] = 0
+    npoints += 1
+}
+define perm20(a) {dummy = perm0(a)}
+
+define perm2(a) {
+    stars[nstars++] = 2
+    npoints += 1
+}
+
+define perm11(a) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    stars[nstars++] = 11
+    npoints += 2
+}
+
+define cons11(a) {
+    if (!fullcons) {a = 0}
+    constraints[ncoord] = a
+    absc[ncoord++] = a
+    stars[nstars++] = 11
+    npoints += 2
+}
+
+define dup0(a) {wgts[nweights++] = a * vol; symmetry = 0}
+define dup2(a) {wgts[nweights++] = a * vol}
+define dup11(a) {wgts[nweights++] = a * vol}
+
+define init(order) {
+    /* computes orders and integrals of the basis polynomials */
+    auto i, p, q, n, a
+
+    n = 0
+    /* p_i(x) = x^i (1-x)^(order -i) */
+    for (p = order; p >= 0 && (!symmetry || p >= order - p); p--) {
+	q = order - p
+	orders[2 * n + 0] = p
+	orders[2 * n + 1] = q
+	a = 1. / (1. + p + q)
+	for (i = q; i > 0; i--) a *= i / (p + i)
+	integr[n++] = a
+    }
+
+    return n
+}

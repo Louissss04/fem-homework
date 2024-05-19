@@ -1,0 +1,18 @@
+# Bash functions used by scripts ./newton, ./quad2ml and ./quadrule-ml-check.sh
+#
+# $Id: read_rule.func,v 1.8 2020/08/12 12:50:22 zlb Exp $
+
+read_rule () {
+    sed -e 's/[ 	]*//g' -e 's/\/\*\*\///g' -e 's/\\//g' \
+	-e 's/^\*\(Dup\|Perm\)/\1/g' | \
+	awk '/\),$/{print; next} /,$/{printf "%s", $0; next} {print}' | \
+	grep -iw '\(dup\|perm\|cons\|mono\)[0-9][1-9]*' | \
+	sed -e 's/[^-*+.,()\/0-9dupermconsDUPERMCONS]//g' \
+	    -e 's/[Dd][Uu][Pp]/t = dup/g' \
+	    -e 's/[Pp][Ee][Rr][Mm]/t = perm/g' \
+	    -e 's/[Cc][Oo][Nn][Ss]/t = cons/g' \
+	    -e 's/[Mm][Oo][Nn][Oo]/t = mono/g' \
+	    -e 's/)[ 	]*,/)/g' -e 's/)/) /g' \
+	    -e 's/[EeDd]\([-+][0-9]*\)/*10^(\1)/g' \
+	    -e 's/\(perm\|dup\|cons\|mono\)[123]0/\10/g'
+}

@@ -1,0 +1,319 @@
+#!/usr/bin/python
+#
+# This script dumps a quadrature rule in the following CSV format:
+#	x_1,y_1,z_1,w_1
+#	... ...
+#	x_n,y_n,z_n,w_n
+# The quadrature rule is read from stdin and is given using the dup/perm/cons
+# macros as in src/quad.c
+#
+# $Id: quadrule-dump-csv,v 1.14 2020/03/15 10:22:54 zlb Exp $
+
+from __future__ import print_function
+import sys
+import os
+import re
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+if len(sys.argv) != 2:
+    eprint('This program dumps a quadrature rule in CSV format (x,y,z,w)')
+    eprint('Usage:')
+    eprint('   ', sys.argv[0], 'dim [< rule_data]')
+    eprint('Influential environment variables:')
+    eprint('  QUADRULE_DIGITS - controls the precision (digits)')
+    eprint('  QUADRULE_NOEXP  - if non-empty and not "n", "no", "0", etc.,')
+    eprint('                    then the symmetry orbits are not expanded')
+    eprint('                    (output one point for each orbit.)')
+
+    exit(1)
+
+dim = int(sys.argv[1])
+if dim < 1 or dim > 3:
+    eprint('Invalid \'dim\' value!')
+    exit(1)
+eprint('dim:', dim);
+
+###############################################################################
+# define functions
+
+def check_dim(d, func):
+    global dim
+    if dim != d:
+        eprint('Error:', func + '() is not allowed for dim =', dim)
+        exit(1)
+
+# Use mpmath (pip install mpmath) for high-precision arithmetics
+import mpmath
+from mpmath import mp
+
+if os.getenv('QUADRULE_DIGITS') == None:
+    mp.dps = 34
+else:
+    mp.dps = int(os.environ['QUADRULE_DIGITS'])
+
+S = mp.mpf(1.0)         # sum of the coordinates
+
+if os.getenv('QUADRULE_NOEXP') != None and \
+   os.getenv('QUADRULE_NOEXP') != '0' and \
+   os.getenv('QUADRULE_NOEXP').upper() != 'N' and \
+   os.getenv('QUADRULE_NOEXP').upper() != 'NO':
+    expand = False
+else:
+    expand = True
+
+#------------------------------------- 1D
+
+def dup0(a):
+    return False, [a]
+
+def dup2(a):
+    check_dim(1, 'dup2')
+    return False, [a]
+
+def dup11(a):
+    check_dim(1, 'dup11')
+    if expand == True:
+        return False, [a,a]
+    else:
+        return False, [a]
+
+def perm20(a):
+    check_dim(1, 'perm20')
+    return True, [[a]]
+
+def perm2(a):
+    check_dim(1, 'perm2')
+    return True, [[mp.mpf(0.5)]]
+
+def perm11(a):
+    global S
+    check_dim(1, 'perm11')
+    if expand == True:
+        return True, [[a],[S - a]]
+    else:
+        return True, [[a]]
+
+#------------------------------------- 2D
+
+def dup3(a):
+    check_dim(2, 'dup3')
+    return False, [a]
+
+def dup21(a):
+    check_dim(2, 'dup21')
+    if expand == False:
+        return False, [a]
+    return False, [a,a,a]
+
+def dup111(a):
+    check_dim(2, 'dup111')
+    if expand == False:
+        return False, [a]
+    return False, [a,a,a,a,a,a]
+
+def perm30(a,b):
+    check_dim(2, 'perm30')
+    return True, [[a,b]]
+
+def perm3(a):
+    check_dim(2, 'perm3')
+    return True, [[1/mp.mpf(3),1/mp.mpf(3)]]
+
+def perm21(a):
+    global S
+    check_dim(2, 'perm21')
+    if expand == False:
+        return True, [[a,a]]
+    b = S - a - a
+    return True, [[a,a],[a,b],[b,a]]
+
+def perm111(a,b):
+    global S
+    check_dim(2, 'perm111')
+    if expand == False:
+        return True, [[a,b]]
+    c = S - a - b
+    return True, [[a,b],[a,c],[b,a],[b,c],[c,a],[c,b]]
+
+#------------------------------------- 3D
+
+def dup4(a):
+    check_dim(3, 'dup4')
+    return False, [a]
+
+def dup31(a):
+    check_dim(3, 'dup31')
+    if expand == False:
+        return False, [a]
+    return False, [a,a,a,a]
+
+def dup22(a):
+    check_dim(3, 'dup22')
+    if expand == False:
+        return False, [a]
+    return False, [a,a,a,a,a,a]
+
+def dup211(a):
+    check_dim(3, 'dup211')
+    if expand == False:
+        return False, [a]
+    return False, [a,a,a,a,a,a,a,a,a,a,a,a]
+
+def dup1111(a):
+    check_dim(3, 'dup1111')
+    if expand == False:
+        return False, [a]
+    return False, [a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a]
+
+def perm40(a,b,c):
+    check_dim(3, 'perm40')
+    return True, [[a,b,c]]
+
+def perm4(a):
+    check_dim(3, 'perm4')
+    return True, [[mp.mpf(.25),mp.mpf(.25),mp.mpf(.25)]]
+
+def perm31(a):
+    global S
+    check_dim(3, 'perm31')
+    if expand == False:
+        return True, [[a,a,a]]
+    b = S - a - a - a
+    return True, [[a,a,a],[a,a,b],[a,b,a],[b,a,a]]
+
+def perm22(a):
+    global S, dim
+    check_dim(3, 'perm22')
+    b = S*mp.mpf(0.5) - a
+    if expand == False:
+        return True, [[a,a,b]]
+    dim = 2
+    ret = []
+    S = mp.mpf(1.0) - a
+    for t in perm21(b)[1]:
+        ret += [[a] + t]
+    S = mp.mpf(1.0) - b
+    for t in perm21(a)[1]:
+        ret += [[b] + t]
+    dim = 3
+    S = mp.mpf(1.0)
+    return True, ret
+
+def perm211(a,b):
+    global S, dim
+    check_dim(3, 'perm211')
+    if expand == False:
+        return True, [[a,a,b]]
+    c = S - a - a - b
+    dim = 2
+    ret = []
+    S = mp.mpf(1.0) - a
+    for t in perm111(b,c)[1]:
+        ret += [[a] + t]
+    S = mp.mpf(1.0) - b
+    for t in perm21(a)[1]:
+        ret += [[b] + t]
+    S = mp.mpf(1.0) - c
+    for t in perm21(a)[1]:
+        ret += [[c] + t]
+    dim = 3
+    S = mp.mpf(1.0)
+    return True, ret
+
+def perm1111(a,b,c):
+    global S, dim
+    check_dim(3, 'perm1111')
+    if expand == False:
+        return True, [[a,b,c]]
+    d = S - a - b - c
+    dim = 2
+    ret = []
+    S = mp.mpf(1.0) - a
+    for t in perm111(b,c)[1]:
+        ret += [[a] + t]
+    S = mp.mpf(1.0) - b
+    for t in perm111(a,c)[1]:
+        ret += [[b] + t]
+    S = mp.mpf(1.0) - c
+    for t in perm111(a,b)[1]:
+        ret += [[c] + t]
+    S = mp.mpf(1.0) - d
+    for t in perm111(a,b)[1]:
+        ret += [[d] + t]
+    dim = 3
+    S = mp.mpf(1.0)
+    return True, ret
+
+###############################################################################
+
+# Preprocess stdin using the bash script 'read_rule.func'
+import subprocess
+p = subprocess.Popen('. `dirname "' + sys.argv[0] + '"`/read_rule.func;' + \
+                     'read_rule |' + \
+                     'sed -e "s/cons/perm/" -e "s/^t = //" -e "s/ //"' + \
+                        ' -e "s/(/(mpmath.mpmathify(\'/" -e "s/)/\'))/"' + \
+                        ' -e "s/,/\'),mpmath.mpmathify(\'/g"' + \
+                        ' -e "s/\//\')\/mpmath.mpmathify(\'/g"', \
+                     shell=True, stdin=None, stdout=subprocess.PIPE)
+
+# Read and process pre-processed data
+points = []
+weights = []
+for line in p.stdout.readlines():
+    macro = line.decode().replace('\n', '')
+    # Note: use re.sub to remove 'mp.mpf()' when printing
+    ###eprint('Processing', re.sub(r'mpmath\.mpmathify\(\'([^()]*)\'\)', r'\1', macro))
+    exec('flag,ret=' + macro)
+    if flag:
+        points += ret
+    else:
+        weights += ret
+
+if p.wait() != 0:
+    exit(1)
+
+#-------- output results
+n = len(points)
+m = len(weights)
+if n != m:
+    eprint("Number of points (' + n + ') and number of weights (' + \
+            m + ') mismatch!")
+    exit(1)
+
+eprint('Dumping list of points and weights ...')
+eprint('Number of points:', n)
+eprint('')
+
+min_wgt = mp.mpf(1)
+min_cor = mp.mpf(1)
+min_dis = mpmath.sqrt(mp.mpf(2))
+for i in range(0, n):
+    line = str(points[i][0])
+    for j in range(1, dim):
+        line += ',' + str(points[i][j])
+    line += ',' + str(weights[i])
+    print(line)
+    # get minimum weight
+    if min_wgt > weights[i]:
+        min_wgt = weights[i]
+    # get minimum coordinate
+    for j in range(0, dim):
+        if min_cor > points[i][j]:
+            min_cor = points[i][j]
+    # get minimum distance
+    for k in range(i + 1, n):
+        d = mp.mpf(0)
+        for j in range(0, dim):
+            tmp = points[i][j] - points[k][j]
+            d += tmp * tmp
+        d = mpmath.sqrt(d)
+        if min_dis > d:
+            min_dis = d
+
+eprint('')
+eprint('Minimum weight:', min_wgt)
+eprint('Minimum coordinate:', min_cor)
+eprint('Minimum distance:', min_dis)
+eprint('Done.')

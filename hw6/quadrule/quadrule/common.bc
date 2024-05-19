@@ -1,0 +1,435 @@
+#!/usr/bin/bc -lq
+#
+# Common functions for the BC scripts
+#
+# $Id: common.bc,v 1.42 2020/03/18 07:15:23 zlb Exp $
+
+#
+# Global parameters
+scale		= 80		/* number of digits used in the computations */
+digits		= 35		/* number of digits printed */
+#tol 		= .1^(scale-16)	/* convergence tolerance (16 digits less) */
+tol 		= 10^-48	/* convergence tolerance */
+least_square	= 0		/* whether use linear least square solution */
+
+#================== DON'T TOUCH ANY THING BELOW THIS LINE! ==================
+
+#
+# symmetry is set by the dupXXX functions, DON'T CHANGE IT!
+symmetry = 1
+
+define evaluate(x, p) {
+    /* computes sum x'[i]^p[i], i=0..dim, where x'[i] = x[i] for i=0,...,dim-1,
+     * and x'[dim] = 1 - (sum x[i], i=0..dim-1) */
+    auto i, d, a
+    if (x[0] == 0) {if (p[0] != 0) return 0 else d = 1} else d = x[0]^p[0]
+    a = 1.0 - x[0]
+    for (i = 1; i < dim; i++) {
+	a -= x[i]
+	if (p[i] == 0) continue
+	if (x[i] == 0) return 0
+	d *= x[i]^p[i]
+    }
+    if (p[dim] == 0) return d
+    if (a == 0) return 0
+    return d * (a^p[dim])
+}
+
+define digit(val) {
+    if (val < 1) return 0
+    if (val < 2) return 1
+    if (val < 3) return 2
+    if (val < 4) return 3
+    if (val < 5) return 4
+    if (val < 6) return 5
+    if (val < 7) return 6
+    if (val < 8) return 7
+    if (val < 9) return 8
+    return 9
+}
+
+define trunc(d, ndigits, round) {
+    /* truncate 'd' to given number of ndigits */
+    auto a, r, s, scale0, sign, i, n, m
+    if (d == 0) return 0
+    sign = 1
+    if (d < 0) {sign = -1; d = -d}
+    scale0 = scale
+    scale = ndigits; r = d % 1
+    scale = ndigits + 1; s = 0.1^ndigits
+    d -= r
+    if (round && r >= 0.5 * s) d += s
+    scale = ndigits
+    /* adjust scale of d */
+    s = 10^ndigits
+    a = 0
+    while (s > 1) {
+	scale = 0; r = (d * s) % 10; scale = ndigits
+	a += digit(r) / s
+	s /= 10
+    }
+    s = 1
+    while (s <= d) {
+	scale = 0; r = (d / s) % 10; scale = ndigits
+	a += digit(r) * s
+	s *= 10
+    }
+    d = a
+    scale = scale0
+    if (sign > 0) return d else return -d
+}
+
+define round(a) {return trunc(a, 0, 1)}
+define int(a) {return trunc(a, 0, 0)}
+
+define lcd(a, b) {
+    /* returns the largest common divisor of a and b */
+    auto r, scale0
+    scale0 = scale
+    scale = 0
+    while (1) {
+	r = a % b
+	if (r == 0) break
+	a = b
+	b = r
+    }
+    return b
+}
+
+define print_fraction(f0, eps) {
+    /* approximate f by a fraction and print the result */
+    auto a, b, c, d, f, stack, i, j
+    a = int(f = f0)
+    f -= a
+    b = a
+    c = 1
+    for (i = 0; i < 1000; i++) {
+	if (f == 0) break
+	f = 1 / f
+	stack[i] = round(f)
+	/* compute b := numerator and c := denominator */
+	j = i
+	b = 1
+	c = stack[j]
+	while (--j >= 0) {
+	    /* compute 1 / (stack[j] + b / c) = c / (c * stack[j] + b) */
+	    d = c
+	    c = c * stack[j] + b
+	    b = d
+	}
+	b += c * a
+	d = b / c - f0
+	if (d >= -eps && d <= eps) break
+	stack[i] = int(f)
+	f -= stack[i]
+    }
+    # d = lcd(b, c); b /= d; c /= d
+    print b
+    if (c != 1) print "/", c
+}
+
+# Test print_fraction()
+#t = print_fraction(4 * a(1), 0.0000001); print "\n"
+#halt
+
+define print_float(val, nd)
+{
+    auto exp
+    if (val == 0) {print "0."; return}
+    if (val < 0) {print "-"; val = -val}
+    exp = 0
+    while (val > 10) {exp += 1; val *= 0.1}
+    if (val < 0.00001 || val <= 0.1^nd)
+	while (val < 1) {exp -= 1; val *= 10}
+    print trunc(val, nd, 1)
+    if (exp != 0) {if (exp > 0) print "e+", exp else print "e", exp}
+}
+
+define get_points(eps) {
+    auto i, j, k, l, m, n, pm, pv, na, np, sum, err;
+    n = 0
+    m = 0
+    for (l = 0; l < nstars; l++) {
+	pm = mat[stars[l]]
+	pv = vec[stars[l]]
+	na = nabsc[stars[l]]
+	np = npnts[stars[l]]
+	for (k = 0; k < np; k++) {
+	    /* Transform the abscissas [m .. na - 1] to coordinates:
+		pts = perm_vec + perm_mat * abscissas */
+	    for (i = 0; i < dim; i++) {
+		pts[n*dim + i] = perm_vec[pv++]
+		for (j = 0; j < na; j++) {
+		    pts[n*dim + i] += perm_mat[pm + j*dim + i] * absc[m + j]
+		}
+	    }
+	    pm += dim * na
+	    n += 1
+	}
+	m += na
+    }
+
+    # check the abscissas and weights
+    sum = 0
+    for (i = 0; i < nstars; i++) {
+	if (wgts[i] < -eps || wgts[i] > 1 + eps) {
+	    print "ERROR: weights out of range!\n"
+	    halt
+	}
+	sum += wgts[i] * npnts[stars[i]]
+    }
+    for (j = 0; j < npoints * dim; j++) {
+	if (pts[j] < -eps || pts[j] > 1 + eps) {
+	    print "ERROR: abscissae out of range!\n"
+	    halt
+	}
+    }
+
+    err = sum - vol
+    if (err < -eps || err > eps) {
+	print "WARNING: the sum of weights is wrong: ", sum / vol, "\n"
+	halt
+    }
+}
+
+define solve(m, n, lda) {
+    /* solve the linear system of equations: fjac x = fvec */
+    auto i, j, k, p, q, d, t, permu
+
+    for (i = 0; i < n; i++)
+	permu[i] = i
+
+    for (j = 0; j < n && j < m; j++) {
+	/* find pivot */
+	d = 0
+	p = j
+	q = j
+	for (i = j; i < m; i++) {
+	    for (k = j; k < n; k++) {	# full pivoting
+		t = fjac[i * lda + k]
+		if (t < 0) t = -t
+		if (d < t) {
+		    d = t
+		    p = i
+		    q = k
+		}
+	    }
+	}
+	if (d < tol) {
+	    #print "WARNING: singular system at j = ", j, "\n"
+	    break
+	}
+	if (p != j) {
+	    /* swap rows j and p */
+	    for (i = j; i < n; i++) {
+		t = fjac[j * lda + i]
+		fjac[j * lda + i] = fjac[p * lda + i]
+		fjac[p * lda + i] = t
+	    }
+	    t = fvec[j]; fvec[j] = fvec[p]; fvec[p] = t
+	}
+	if (q != j) {
+	    /* swap columns j and q */
+	    for (k = 0; k < m; k++) {
+		t = fjac[k * lda + j]
+		fjac[k * lda + j] = fjac[k * lda + q]
+		fjac[k * lda + q] = t
+	    }
+	    t = permu[j]; permu[j] = permu[q]; permu[q] = t
+	}
+	d = 1.0 / fjac[j * lda + j]
+	for (i = j + 1; i < n; i++)
+	    fjac[j * lda + i] *= d;
+	fvec[j] *= d
+	for (i = j + 1; i < m; i++) {
+	    d = fjac[i * lda + j]
+	    for (k = j + 1; k < n; k++)
+		fjac[i * lda + k] -= d * fjac[j * lda + k]
+	    fvec[i] -= d * fvec[j]
+	}
+    }
+
+    for (; j < n; j++)
+	fvec[j] = 0.0
+
+    /* back substitution */
+    for (j -= 2; j >= 0; j--) {
+	for (i = j + 1; i < n && i < m; i++) {
+	    fvec[j] -= fjac[j * lda + i] * fvec[i]
+	}
+    }
+
+    /* permute the solution to correct order */
+    for (i = 0; i < n; i++)
+	fjac[permu[i]] = fvec[i]
+    for (i = 0; i < n; i++)
+	fvec[i] = fjac[i]
+
+#    print "*** The solution:\n"
+#    for (i = 0; i < n; i++) {
+#	print "***    fvec[", permu[i], "] = ", fvec[i], "\n"
+#    }
+}
+
+define func(jac_flag) {
+    auto error, l, m, n, i, j, k, ii, pm, pv, na, np, p, x, quad, t, tmp, a
+
+    t = get_points(1.0)
+
+    #
+    # Loop over all polynomials
+    error = 0
+    for (n = 0; n < neqns; n++) {
+	for (ii = 0; ii <= dim; ii++) p[ii] = orders[n * (dim + 1) + ii]
+	quad = 0
+	l = 0
+	m = n * lda
+	for (k = 0; k < nstars; k++) {
+	    pm = mat[stars[k]]
+	    na = nabsc[stars[k]]
+	    np = npnts[stars[k]]
+	    if (jac_flag) {
+		fjac[n * lda + ncoord + k] = 0
+		for (j = 0; j < na; j++) fjac[m + j] = 0
+	    }
+	    for (i = 0; i < np; i++) {
+		for (ii = 0; ii < dim; ii++) x[ii] = pts[l * dim + ii]
+		tmp = evaluate(x, p)
+		quad += tmp * wgts[k]
+		if (jac_flag) {
+		    fjac[n * lda + ncoord + k] += tmp
+		    if (na > 0) {
+			if (p[dim] == 0) {
+			    a = 0
+			} else {
+			    p[dim] -= 1
+			    a = (p[dim] + 1) * evaluate(x, p)
+			    p[dim] += 1
+			}
+			for (ii = 0; ii < dim; ii++) {
+			    t[ii] = -a
+			    if (p[ii] == 0) continue
+			    p[ii] -= 1
+			    t[ii] += (p[ii] + 1) * evaluate(x, p)
+			    p[ii] += 1
+			}
+			for (j = 0; j < na; j++) {
+			    for (ii = 0; ii < dim; ii++) {
+				fjac[m + j] +=  t[ii] * perm_mat[pm + ii]
+			    }
+			    pm += dim
+			}
+		    }
+		}
+		l += 1
+	    }
+	    if (jac_flag) {
+		fjac[n * lda + ncoord + k] /= integr[n]
+		for (j = 0; j < na; j++) {
+		    fjac[m++] *= wgts[k] / integr[n]
+		}
+	    }
+	}
+	tmp = quad / integr[n] - 1
+	fvec[n] = tmp
+	if (tmp < 0)
+	    tmp = -tmp
+	if (error < tmp)
+	    error = tmp
+    }
+
+    return error
+}
+
+define setup() {
+    auto i, j, t, w
+
+    if (nweights != nstars) {
+	print "ERROR: number of weights (", nweights, \
+		") and number of stars (", nstars, ") don't match!", "\n"
+	halt
+    }
+
+    if (0) {
+	/* This forces unsymmetry on all points, it is used to test the code
+	 * for the unsymmetric case with a symmetric rule */
+	t = get_points(1.0)
+	npoints = 0
+	for (i = 0; i < nstars; i++) {
+	    for (j = 0; j < npnts[stars[i]]; j++) w[npoints++] = wgts[i]
+	}
+	ncoord = npoints * dim
+	nstars = npoints
+	for (i = 0; i < nstars; i++) {
+	    stars[i] = 0
+	    wgts[i] = w[i]
+	    for (j = 0; j < dim; j++) absc[i * dim + j] = pts[i * dim + j]
+	}
+	symmetry = 0
+    }
+
+    neqns = init(order)
+    lda = neqns
+    if (lda < ncoord + nstars) lda = ncoord + nstars
+
+    print "*** dim: ", dim, ", points: ", npoints, ", equations: ", neqns, \
+	  ", unknowns: ", ncoord + nstars, ", symmetry: "
+    if (symmetry) print "true\n" else print "false\n"
+}
+
+/* Function for computing significance factors of all orbits, the computed
+ * significance factors are stored in the array sig[0:nstars-1].
+ *
+ *  [1] H. Xiao, Z. Gimbutas, A numerical algorithm for the construction of
+ *	efficient quadratures in two and higher dimensions,
+ *	Comput. Math. Appl. 59 (2010) 663¨C676.
+ *
+ *  [2] S.E. Mousavi, H. Xiao, N. Sukumar, Generalized Gaussian quadrature
+ *	rules on arbitrary polygons,
+ *	Int. J. Numer. Methods Engrg. 82 (2010) 99¨C113.
+ *
+ * FIXME: require orthonormal bases! */
+define print_sfactors() {
+    auto i, j, k, ii, n, t, s, x, p, cons
+
+    print "\n===============================================================\n"
+    if (symmetry) {
+	symmetry = 0
+	neqns = init(order)
+    }
+    print "*** significance factors (", neqns, " equations without symmetry)\n"
+
+    t = get_points(1.0)
+
+    n = 0
+    k = 0
+    for (i = 0; i < nstars; i++) {
+	for (ii = 0; ii < dim; ii++) x[ii] = pts[n * dim + ii]
+	s = 0;
+	for (j = 0; j < neqns; j++) {
+	    for (ii = 0; ii <= dim; ii++) p[ii] = orders[j * (dim + 1) + ii]
+            t = evaluate(x, p)
+	    s += t * t
+	}
+	sig[i] = wgts[i] * s
+	if (sig[k] > sig[i]) k = i
+	n += npnts[stars[i]]
+    }
+
+    n = 0
+    for (i = 0; i < nstars; i++) {
+	cons = 0
+	for (j = 0; j < nabsc[stars[i]]; j++) {
+	    if (constraints[n + j] >= 0) {
+		cons = 1
+		break
+	    }
+	}
+	if (k == i) print "***  * " else print "***    "
+	if (cons) print "Cons" else print "Perm"
+	print stars[i], ": "
+	t = print_float(sig[i], 16)
+	print "\n"
+	n += nabsc[stars[i]]
+    }
+}

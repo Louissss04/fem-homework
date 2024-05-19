@@ -1,0 +1,29 @@
+#!/usr/bin/bc -lq
+#
+# $Id: 1Dpermu.bc,v 1.1 2006/05/28 02:11:41 zlb Exp $
+
+dim = 1
+vol = 1
+
+mat0 = 0; vec0 = 0
+mat[0] = mat0; vec[0] = vec0
+nabsc[0] = dim
+npnts[0] = 1
+perm_mat[mat0++] = 1
+perm_vec[vec0++] = 0
+
+mat[2] = mat0
+vec[2] = vec0
+nabsc[2] = 0
+npnts[2] = 1
+perm_vec[vec0++] = 1/2
+
+mat[11] = mat0
+vec[11] = vec0
+nabsc[11] = 1
+npnts[11] = 2
+perm_mat[mat0++] = 1
+perm_vec[vec0++] = 0
+
+perm_mat[mat0++] = -1
+perm_vec[vec0++] = 1

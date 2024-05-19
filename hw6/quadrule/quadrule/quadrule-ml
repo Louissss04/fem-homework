@@ -1,0 +1,557 @@
+#!/usr/bin/python
+#
+# This python script is used to search mass-lumping bases for the triangle or
+# the tetrahdron.
+#   - The arguments 'o', 'o1', 'o2' and 'o3' specifies the orders of the
+#     hierarchical polynomial space[1] P.
+#   - If the environment variable FULL_SPACE=1, then the full hierarchical
+#     polynomial space P is used.
+#   - Otherwise all symmetric subspaces U, P0\subset U\subset P, where P0
+#     denotes the polynomial space of order 'o', will be enumerated and tried
+#     one by one, until a basis is found (if 'ntries' isn't prefixed by '+').
+#   - The script calls the 'quadrule' program to search quadrature rules for
+#     a given subspace U. The optional last argument specifies the 'ntries'
+#     argument for the 'quadrule' program.
+#
+#     Note: If this argument is prefixed by '+', then the script will not stop
+#     when a basis is found and will continue to process all the remaining
+#     cases.
+#
+# This script replaces the old shell script under the same name, and emulates
+# the latter's behavior if the environment variable FULL_SPACE is set to "1".
+#
+# Reference:
+# [1] W. Leng, T. Cui, D. Lin, S. Ma, and L. Zhang, "High order mass-lumping finite elements on triangles and tetrahedra", Numer. Math. Theor. Meth. Appl., Vol. 10, No. 2, May 2017, pp. 331-350.
+# [2] S. Geevers, W.A. Mulder, and J.J.W. Van Der Vegt, "New higher-order mass-lumped tetrahedral elements for wave propagation modelling", SIAM J. Sci. Comput., 2018.
+# $Id: quadrule-ml,v 1.83 2022/08/06 08:12:25 zlb Exp $
+
+import sys
+import os
+import math
+import numpy as np
+
+if sys.version_info[0] >= 3:
+    from functools import cmp_to_key    # for the 'cmp' keyword in sort()
+
+def usage():
+    if len(sys.argv) > 1:
+        print("Invalid command line arguments:", sys.argv[1:])
+    print('Usage:')
+    print('   ', sys.argv[0], 'dim {orders} [[+]ntries]')
+    print('  2D:')
+    print('   ', sys.argv[0], '2 o o1 o2 [[+]ntries]')
+    print('  3D:')
+    print('   ', sys.argv[0], '3 o o1 o2 o3 [[+]ntries]')
+    print('("env FULL_SPACE=1', sys.argv[0], '..." to emulate the old behavior)')
+    print('\nEnvironment variables:')
+    print('  QUADRULE_BIN - defines the quadrule executable filename.')
+    print('  FULL_ORDER   - specifies the space of test functions:')
+    print('                     P(o+o_dim-2) if FULL_ORDER is defined (old condition),')
+    print('                     P(o-2)\cup P if FULL_ORDER is undefined (new condition),')
+    print('                 where P is the finite element polynomial space.')
+    print('  FULL_SPACE   - if defined, use the full hierarchical polynomial space.')
+    exit(1)
+
+def get_monos(dim, order):
+    def get_monos0(dim, order, ub, m):
+        # construct monomials contining exact (dim+1) barycentric coordinates
+        # (with all nonzero powers)
+        if order == 0 or dim == 0:
+            if order <= ub and order > 0:
+                return [m + [order]]
+            return []
+        tmp = []
+        for i in range(min(ub, order), 0, -1):
+            tmp += get_monos0(dim - 1, order - i, i, m + [i])
+        return tmp
+    return get_monos0(dim, order, order, [])
+
+def get_orbit(m, d):
+    # Computes the orbit(permutation star and arguments) for the list 'm'.
+    #
+    # The return value is a list with each entry being a dictionary of the form
+    #       {"count":#, "value":#}.
+    #
+    # On input, m is a decreasing list of integers, which are the powers of a
+    # monimial in \lambda_0,...\lambda_d, with sum(m) == dim and len(m)==d+1,
+    # and d>=0 and d<=dim.
+    #
+    # Examples (dim == 3):
+    #       m=[4]       => [{"count": 3, "value": 0},
+    #                       {"count": 1, "value": 4}]
+    #                   => Mono31(0,4)
+    #       m=[2,1,1]   => [{"count": 2, "value": 1},
+    #                       {"count": 1, "value": 2},
+    #                       {"count": 1, "value": 0}]
+    #                   => Mono211(1,2,0)
+    def get_orbit0(m, d, work):
+        if len(m) == 0:
+            if d > 0:
+                work += [{"count": d, "value": 0}]
+            def comp(a,b):
+                if a["count"] != b["count"]:
+                    return b["count"] - a["count"]
+                else:
+                    return a["value"] - b["value"]
+            if sys.version_info[0] >= 3:
+                work.sort(key=cmp_to_key(comp))
+            else:
+                work.sort(cmp=comp)
+            return work
+        i = 1
+        while i < len(m) and m[i] == m[0]:
+            i += 1
+        return get_orbit0(m[i:], d - i, work + [{"count": i, "value": m[0]}])
+    return get_orbit0(m, d, [])
+
+def orbit_size(m):
+    o = get_orbit(m, dim + 1)
+    s = 0
+    for t in o:
+        s = 10 * s + t["count"]
+    return {3:1, 21:3, 111:6, 4:1, 31:4, 22:6, 211:12, 1111:24}[s]
+
+def mult(m, n):
+    # multiplication of two monomials
+    if len(m) < len(n):
+        res = m + [0] * (len(n) - len(m))
+    else:
+        res = m + []
+    for i in range(len(n)):
+        res[i] += n[i]
+    return res
+
+def integral(m):
+    # Returns the integral on the standard dim-simplex of the monomial m:
+    #       m! / (dim + sum(m))!
+    a = 1.0
+    p = sum(m)
+    for i in range(dim):
+        a /= p + i + 1
+    for i in range(1, len(m)):
+        p -= m[i]
+        for j in range(m[i], 0, -1):
+            a *= j / float(p + j)
+    #print("mono=%s, integr=%0.6f"%(str(m), a))  # for debugging
+    return a
+
+def permu(list):
+    def permu0(list, work):
+        if len(list) <= 1:
+            return [work + list]
+        tmp = []
+        for i in range(len(list)):
+            tmp += permu0(list[:i] + list[i+1:], work + [list[i]])
+        return tmp
+    tmp = permu0(list, [])
+    tmp.sort()
+    # remove identical entries
+    ret = []
+    for i in range(len(tmp)):
+        if i <= 0 or tmp[i] != tmp[i-1]:
+            ret += [tmp[i]]
+    return ret
+
+def mass_matrix(monos):
+    # Compute the mass-matrix A = [\int m n]_{m in {monos}, n {in monos}}
+    expanded = []     # list of expanded orbits
+    for m in monos:
+        expanded += permu(m + [0]*(dim+1-len(m)))
+    A = []
+    for m in expanded:
+        row = []
+        for n in expanded:
+            row += [integral(mult(m, n))]
+        A += [row]
+    # Normalize A (transforming diagonals to 1)
+    D = [1.0 / math.sqrt(A[i][i]) for i in range(len(A))]
+    for i in range(len(A)):
+        d = D[i]
+        for j in range(len(A)):
+            if j == i:
+                continue
+            A[i][j] *= d
+            A[j][i] *= d
+        A[i][i] = 1.0
+    return A,D,expanded
+
+def matrix_rank(A):
+    rank = len(A)
+    if True:    # use the SVD routine of numpy
+        s = np.linalg.svd(np.array(A), compute_uv = False)
+        for i in range(len(s)):
+            if math.fabs(s[i]) < 1e-10:
+                rank -= 1
+    else:       # use Gauss elimination with partial pivoting
+        for i in range(len(A)):
+            d = math.fabs(A[i][i])
+            k = i
+            for j in range(i+1, len(A)):
+                a = math.fabs(A[j][i])
+                if (a > d):
+                    d = a
+                    k = j
+            if k != i:
+                for j in range(i, len(A)):
+                    a = A[i][j]
+                    A[i][j] = A[k][j]
+                    A[k][j] = a
+            if d < 1e-10:
+                rank -= 1
+                continue
+            for k in range(i+1, len(A)):
+                d = A[k][i] / A[i][i]
+                A[k][i] = 0.0
+                for j in range(i + 1, len(A)):
+                    A[k][j] -= d * A[i][j]
+        #for i in range(len(A)):
+        #    print("\tA[%d][%d] = %lg"%(i, i, A[i][i]))
+    return rank
+
+def is_independent(monos, expanded, D, L):
+    ###########################################################################
+    # returns True if monos + expanded is linearly independent.
+    # 
+    # monos     - contains the list of the first set of monomials.
+    # expanded  - contains the list of the second set of monomials.
+    # D,L       - contains respectively:
+    #               inverse square root of the diagonal of the mass matrix and
+    #               the cholesky factorization of the normalized mass matrix
+    #             of the second set of monomials.
+    ###########################################################################
+    b = [[integral(mult(m, expanded[j])) * D[j] for m in monos] \
+                    for j in range(len(expanded))]
+    c = [[integral(mult(m, n)) for n in monos] for m in monos]
+    # compute Schur complement s = c - b.T * (L*L.T)^(-1) * b = c - x.T * x,
+    # where x = L^(-1)*b
+    x = np.linalg.solve(L, b)
+    # FIXME: linalg.matmul?
+    s = [[c[i][j] - sum([x[k][i] * x[k][j] for k in range(len(expanded))]) \
+            for i in range(len(c))] for j in range(len(c))]
+    # Note: the diagonal of c is a positive constant (this is true only when
+    # monos only contains permutations of a single monomials)
+    d = 1.0 / c[0][0]
+    #print("****** monos: %s"%(str(monos)))
+    for v in np.linalg.svd(np.array(s), compute_uv = False):
+        #print("v =", v * d)
+        if (v * d < 1e-10):
+            return False
+    return True
+
+def basis_rank(monos):
+    # returns the size and rank of the basis {monos}
+    A,D,expanded = mass_matrix(monos)
+    del D, expanded
+    N = N0 = len(A)
+    rank = matrix_rank(A)
+    return N,rank
+
+def basis_size(monos):
+    # returns the size of the basis {monos}
+    N = 0
+    for m in monos:
+        N += orbit_size(m)
+    return N
+
+def get_cmdline(monos):
+    # count number of orbits
+    if dim == 2:
+        s3 = s21 = s111 = 0
+        c21 = c111 = 0
+    else:
+        s4 = s31 = s22 = s211 = s1111 = 0
+        c31 = c22 = c211e = c211f = c1111 = 0
+
+    stdin = ""
+    for m in monos:
+        orbit = get_orbit(m, dim + 1)
+        s = 0
+        for i in orbit:
+            s = 10 * s + i["count"]
+        stdin += "Mono" + str(s) + "("
+        first = True
+        for i in orbit:
+            if not first:
+                stdin += ','
+            stdin += str(i["value"])
+            first = False
+        stdin += ")\n"
+    
+        #--------------- 2D stars
+        if s == 3:
+            if s3 >= 1:
+                return "", "", False, False
+            s3 += 1
+        elif s == 21:
+            s21 += 1
+            if orbit[0]["value"] == 0:      # Perm21(0)
+                if c21 == 1 or c21 == 3:
+                    return "", "", False, False
+                c21 += 1                    # bit 0
+            elif orbit[1]["value"] == 0:    # Perm21(1/2)
+                if c21 == 2 or c21 == 3:
+                    return "", "", False, False
+                c21 += 2                    # bit 1
+        elif s == 111:
+            s111 += 1
+            if orbit[0]["value"] == 0:
+                c111 += 1
+        #--------------- 3D stars
+        elif s == 4:
+            if s4 >= 1:
+                return "", "", False, False
+            s4 += 1
+        elif s == 31:
+            s31 += 1
+            if orbit[0]["value"] == 0:      # Perm31(0)
+                if c31 == 1 or c31 == 3:
+                    return "", "", False, False
+                c31 += 1                    # bit 0
+            elif orbit[1]["value"] == 0:    # Perm31(1/3)
+                if c31 == 2 or c31 == 3:
+                    return "", "", False, False
+                c31 += 2                    # bit 1
+        elif s == 22:
+            s22 += 1
+            if orbit[0]["value"] == 0:      # Perm22(0)
+                if c22 >= 1:
+                    return "", "", False, False
+                c22 += 1
+        elif s == 211:
+            s211 += 1
+            if orbit[0]["value"] == 0:      # Perm211(0,.)
+                c211e += 1
+            elif orbit[1]["value"] == 0:    # Perm211(.,0)
+                c211f += 1
+        elif s == 1111:
+            s1111 += 1
+            if orbit[0]["value"] == 0:      # Perm1111(.,.,.,0)
+                c1111 += 1
+    
+    # format cmdline for 'quadrule'
+    if os.getenv('QUADRULE_BIN') != None:
+        quadrule=os.environ['QUADRULE_BIN']
+    elif os.getenv('PBS_NODEFILE') != None:
+        quadrule="mpijob " + os.path.dirname(sys.argv[0]) + "/quadrule"
+    else:
+        quadrule=os.path.dirname(sys.argv[0]) + "/quadrule"
+    
+    if dim == 2:
+        npoints = s3+3*s21+6*s111
+        if os.getenv('FULL_ORDER') == None:
+            cmdline = quadrule + " 2 " + str(o - 2) + " " + str(npoints)
+        else:
+            cmdline = quadrule + " 2 " + str(o + o2 - 2) + " " + str(npoints)
+        cmdline += " " + str(s3) + " " + str(s21)
+        if c21 > 0:
+            cmdline += ":" + str(c21)
+        cmdline += " " + str(s111)
+        if c111 > 0:
+            cmdline += ":" + str(c111)
+    else:   # dim == 3
+        npoints = s4+4*s31+6*s22+12*s211+24*s1111
+        if os.getenv('FULL_ORDER') == None:
+            cmdline = quadrule + " 3 " + str(o - 2) + " " + str(npoints)
+        else:
+            cmdline = quadrule + " 3 " + str(o + o3 - 2) + " " + str(npoints)
+        cmdline += " " + str(s4) + " " + str(s31)
+        if c31 > 0:
+            cmdline += ":" + str(c31)
+        cmdline += " " + str(s22)
+        if c22 > 0:
+            cmdline += ":" + str(c22)
+        cmdline += " " + str(s211)
+        if c211e > 0 or c211f > 0:
+            cmdline += ":" + str(c211e) + ":" + str(c211f)
+        cmdline += " " + str(s1111)
+        if c1111 > 0:
+            cmdline += ":" + str(c1111)
+    no_stop = False
+    if ntries != None:
+        cmdline += " " + ntries
+        if ntries[0] == "+":
+            no_stop = True
+    return cmdline, stdin, True, no_stop
+
+def run_prog(monos):
+    #print(monos)
+    cmdline, stdin, flag, no_stop = get_cmdline(monos)
+    if not flag:
+        return 1
+    print("[quadrule-ml] running \"%s\" ..."%cmdline)
+    #print("Standard input:")
+    #print(stdin)
+
+    import subprocess
+    if os.getenv('FULL_ORDER') == None:
+        p = subprocess.Popen(cmdline, shell=True, stdin=subprocess.PIPE)
+        p.communicate(str.encode(stdin))
+    else:
+        p = subprocess.Popen(cmdline, shell=True, stdin=None)
+    if p.wait() == 0 and not no_stop:
+        return 0
+    else:
+        return 1
+
+def power_set(myset):
+  if not myset: # Empty list -> empty set
+    return [set()]
+
+  r = []
+  for y in myset:
+    sy = set((y,))
+    for x in power_set(myset - sy):
+      if x not in r:
+        r.extend([x, x|sy])
+  return r
+
+###############################################################################
+
+if (len(sys.argv) <= 1):
+    usage()
+
+dim = int(sys.argv[1])
+
+if dim != 2 and dim != 3:
+    usage()
+if dim == 2 and len(sys.argv) != 5 and len(sys.argv) != 6:
+    usage()
+if dim == 3 and len(sys.argv) != 6 and len(sys.argv) != 7:
+    usage()
+
+o  = int(sys.argv[2])
+o1 = int(sys.argv[3])
+o2 = int(sys.argv[4])
+if (dim == 2):
+    if o < 2 or o1 < o or o2 < o1:
+        usage()
+    orders = [o, o1, o2]
+    if len(sys.argv) == 6:
+        ntries = sys.argv[5]
+    else:
+        ntries = None
+else:
+    o3 = int(sys.argv[5])
+    if o < 2 or o1 < o or o2 < o1 or o3 < o2:
+        usage()
+    orders = [o, o1, o2, o3]
+    if len(sys.argv) == 7:
+        ntries = sys.argv[6]
+    else:
+        ntries = None
+
+# construct list of monomials for the FE space.
+
+if True and os.getenv('FULL_ORDER')==None and os.getenv('FULL_SPACE')==None:
+    # use subspaces of P(o, o_1, ..., o_dim) - still in test stage!
+    # First, construct list of monomials of order 'o'
+    monos0 = []
+    for d in range(dim + 1):
+        monos0 += get_monos(d, o)
+    print("[quadrule-ml] base monomials =", monos0)
+    # construct the list of higher order monomials
+    monos1 = []
+    for d in range(1, dim + 1):
+        if orders[d] == o:
+            continue
+        monos1 += get_monos(d, orders[d])
+    print("[quadrule-ml] higher order monomials =", monos1)
+    bases = []
+    for subset in power_set(set([i for i in range(len(monos1))])):
+        if subset == set():
+            continue    # empty set
+        monos_h = []
+        for i in subset:
+            monos_h += [monos1[i]]
+
+        ####################################################################
+        # In the comments below, we use '{.}' to denote the set of monomials
+        # after symmetry expansion.
+        ####################################################################
+
+        monos = monos_h + []
+        # compute mass matrix of {monos}:
+        #       A is the mass matrix
+        #       D is the diagonal of A
+        #       expanded:={monos} (symmetry expanded set of monomials)
+        A,D,expanded = mass_matrix(monos_h)
+        # compute cholesky factorization of A
+        L = np.linalg.cholesky(np.array(A))
+        del A
+        skip_flag = False
+        for m in monos0:
+            # first, check idependency of [m] + {monos_h} (single monomials)
+            if not is_independent([m], expanded, D, L):
+                # examples: quadrule-ml 6 6 8
+                print("*** dependent orbit:", m, ", monos_h:", monos_h)
+                continue
+            # next, check the indenpendency of {m} + {monos_h} (whole orbit)
+            elif not is_independent(permu(m+[0]*(dim+1-len(m))),expanded,D,L):
+                # examples: quadrule-ml 6 6 8
+                print("*** degenerate (partially dependent) orbit:", m,\
+                      ", monos_h:", monos_h)
+                skip_flag = True
+                break
+            monos += [m]
+            # recompute mass matrix and its cholesky factorization
+            A,D,expanded = mass_matrix(monos)
+            L = np.linalg.cholesky(np.array(A))
+            del A
+
+        if skip_flag:   # skip the subset (dependency of a partial orbit)
+            continue
+        # check validity of orbits (e.g., <=1 S4, <=1 C22, etc.)
+        cmdline,stdin,flag,no_stop = get_cmdline(monos)
+        if not flag:
+            continue
+        def comp(m,n):
+            if len(m) != len(n):
+                return len(m) - len(n)
+            for i in range(len(m)):
+                if m[i] != n[i]:
+                    return m[i] - n[i]
+            return 0
+        if sys.version_info[0] >= 3:
+            monos.sort(key=cmp_to_key(comp))
+        else:
+            monos.sort(cmp=comp)
+        if False:   # check for duplicated sets (unnecessary)
+            flag = False
+            for t in bases:
+                if t == monos:
+                    flag = True
+                    break
+            if flag:
+                continue
+        bases += [monos]
+        if False:    # check independency (unnecessary)
+            N,rank = basis_rank(monos)
+            if N != rank:
+                print('[quadrule-ml] unexpected error!')
+        if False:    # only print out the basis
+            print("[quadrule-ml] points = %d, monos = %s"%(basis_size(monos),\
+                                                            str(monos)))
+            continue
+    # sort the bases according to their size
+    def comp(f,g):
+        return basis_size(f) - basis_size(g)
+    if sys.version_info[0] >= 3:
+        bases.sort(key=cmp_to_key(comp))
+    else:
+        bases.sort(cmp=comp)
+    for b in bases:
+        # Note: denpendency of the bases can be checked by piping quadrule-ml
+        # to the command:
+        #   awk '/bases:/ {system("sage quadrule-ml-linear_dependency.sage 3 \"" gensub(".*bases: ", "", "g") "\"")}'
+        print("[quadrule-ml] %d points, bases: %s"%(basis_size(b), str(b)))
+        if run_prog(b) == 0:
+            exit(0)
+    # no solution found, or no-stop flag
+    exit(1)
+else:
+    # use the full space P(o, o_1, ..., o_dim)
+    monos = []
+    for d in range(dim + 1):
+        monos += get_monos(d, orders[d])
+    ret = run_prog(monos)
+    exit(ret)

@@ -1,0 +1,257 @@
+#!/usr/bin/bc -lq
+#
+# 3D functions
+#
+# $Id: 3Dfuncs.bc,v 1.26 2020/04/01 10:22:48 zlb Exp $
+
+nstars = 0
+npoints = 0
+ncoord = 0
+nweights = 0
+nmono = 0
+
+define perm0(a, b, c) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    constraints[ncoord] = -1
+    absc[ncoord++] = b
+    constraints[ncoord] = -1
+    absc[ncoord++] = c
+    stars[nstars++] = 0
+    npoints += 1
+}
+define perm40(a,b,c) {dummy = perm0(a,b,c)}
+
+define perm4(a) {
+    stars[nstars++] = 4
+    npoints += 1
+}
+
+define perm31(a) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    stars[nstars++] = 31
+    npoints += 4
+}
+
+define cons31(a) {
+    if (!fullcons) {if (a<=10^(-10)) {a=0} else {a=1/3}}
+    constraints[ncoord] = a
+    absc[ncoord++] = a
+    stars[nstars++] = 31
+    npoints += 4
+}
+
+define perm22(a) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    stars[nstars++] = 22
+    npoints += 6
+}
+
+define cons22(a) {
+    if (!fullcons) {a = 0}
+    constraints[ncoord] = a
+    absc[ncoord++] = a
+    stars[nstars++] = 22
+    npoints += 6
+}
+
+define perm211(a, b) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    constraints[ncoord] = -1
+    absc[ncoord++] = b
+    stars[nstars++] = 211
+    npoints += 12
+}
+
+define cons211(a, b) {
+    if (fullcons) {
+	constraints[ncoord] = a
+	absc[ncoord++] = a
+	constraints[ncoord] = b
+    } else if (a <= 10^(-10)) {
+	a = 0
+	constraints[ncoord] = a
+	absc[ncoord++] = a
+	constraints[ncoord] = -1
+    } else {
+	b = 0
+	constraints[ncoord] = -1
+	absc[ncoord++] = a
+	constraints[ncoord] = b
+    }
+    absc[ncoord++] = b
+    stars[nstars++] = 211
+    npoints += 12
+}
+
+define perm1111(a, b, c) {
+    constraints[ncoord] = -1
+    absc[ncoord++] = a
+    constraints[ncoord] = -1
+    absc[ncoord++] = b
+    constraints[ncoord] = -1
+    absc[ncoord++] = c
+    stars[nstars++] = 1111
+    npoints += 24
+}
+
+define cons1111(a, b, c) {
+    if (fullcons) {
+	constraints[ncoord] = a
+	absc[ncoord++] = a
+	constraints[ncoord] = b
+	absc[ncoord++] = b
+	constraints[ncoord] = c
+    } else {
+	a = 0
+	constraints[ncoord] = a
+	absc[ncoord++] = a
+	constraints[ncoord] = -1
+	absc[ncoord++] = b
+	constraints[ncoord] = -1
+    }
+    absc[ncoord++] = c
+    stars[nstars++] = 1111
+    npoints += 24
+}
+
+define dup0(a) {wgts[nweights++] = a * vol; symmetry = 0}
+define dup4(a) {wgts[nweights++] = a * vol}
+define dup31(a) {wgts[nweights++] = a * vol}
+define dup22(a) {wgts[nweights++] = a * vol}
+define dup211(a) {wgts[nweights++] = a * vol}
+define dup1111(a) {wgts[nweights++] = a * vol}
+
+define cons1(a) {t = cons31(0)}
+define dup1(a) {t = dup31(a)}
+
+define cons2(a) {t = cons22(0.5)}
+define dup2(a) {t = dup22(a)}
+
+define cons11(a) {t = cons211(0,a)}
+define dup11(a) {t = dup211(a)}
+
+define cons3(a) {t = cons31(1./3.)}
+define dup3(a) {t = dup31(a)}
+
+define cons21(a) {t = cons211(a,0)}
+define dup21(a) {t = dup211(a)}
+
+define cons111(a,b) {t = cons1111(0,a,b)}
+define dup111(a) {t = dup1111(a)}
+
+define sm(a,b,c,d) {
+    monos[4 * nmono + 0] = a;
+    monos[4 * nmono + 1] = b;
+    monos[4 * nmono + 2] = c;
+    monos[4 * nmono + 3] = d;
+    nmono = nmono + 1
+}
+
+define mono4(a) {
+    t = sm(a,a,a,a)
+}
+
+define mono31(a,b) {
+    t = sm(a,a,a,b)#; t = sm(a,a,b,a); t = sm(a,b,a,a); t = sm(b,a,a,a)
+}
+
+define mono22(a,b) {
+    t = sm(a,a,b,b)#; t = sm(a,b,a,b); t = sm(a,b,b,a)
+    #t = sm(b,b,a,a); t = sm(b,a,b,a); t = sm(b,a,a,b)
+}
+
+define mono211(a,b,c) {
+    t = sm(a,a,b,c)#; t = sm(a,a,c,b); t = sm(a,b,a,c)
+    #t = sm(a,b,c,a); t = sm(a,c,a,b); t = sm(a,c,b,a)
+    
+    #t = sm(b,a,a,c); t = sm(b,a,c,a); t = sm(b,c,a,a);
+    #t = sm(c,a,a,b); t = sm(c,a,b,a); t = sm(c,b,a,a)
+}
+
+define mono0111(p,a,b,c) {
+    t = sm(p,a,b,c)#; t = sm(p,a,c,b); t = sm(p,b,a,c)
+    #t = sm(p,b,c,a); t = sm(p,c,a,b); t = sm(p,c,b,a)
+}
+define mono1111(a,b,c,d) {
+    t = mono0111(a,b,c,d)#; t = mono0111(b,a,c,d)
+    #t = mono0111(c,a,b,d); t = mono0111(d,a,b,c)
+}
+
+define init(order) {
+    /* computes orders and integrals of the basis polynomials */
+    auto i, j, p, q, r, s, n, a, b, c, d
+
+    if (nmono > 0) symmetry = 0
+
+    /* loop on homogeneous monomials of order p */
+    n = 0
+    for (p = order; p >= 0; p--) {
+	q = order - p
+	if (symmetry && q > p) q = p
+	for (; q >= 0; q--) {
+	    r = order - p - q
+	    if (symmetry && r > q) r = q
+	    for (; r >= 0 && (!symmetry || r >= order - p - q - r); r--) {
+		s = order - p - q - r
+		if (nmono == 0) {
+		    /* use homogeneous monomials of order p */
+		    orders[4 * n + 0] = p
+		    orders[4 * n + 1] = q
+		    orders[4 * n + 2] = r
+		    orders[4 * n + 3] = s
+		    n = n + 1
+		    continue
+		}
+		/* {homogeneous monomials of order p} \otimes monos[] */
+		for (i = 0; i < nmono; i++) {
+		    a = p + monos[i * 4 + 0]
+		    b = q + monos[i * 4 + 1]
+		    c = r + monos[i * 4 + 2]
+		    d = s + monos[i * 4 + 3]
+		    /* sort (a,b,c,d) */
+		    if (a < b) {t = a; a = b; b = t}
+		    if (a < c) {t = a; a = c; c = t}
+		    if (a < d) {t = a; a = d; d = t}
+		    if (b < c) {t = b; b = c; c = t}
+		    if (b < d) {t = b; b = d; d = t}
+		    if (c < d) {t = c; c = d; d = t}
+		    for (j = 0; j < n; j++)
+			if (a == orders[j * 4 + 0] && \
+			    b == orders[j * 4 + 1] && \
+			    c == orders[j * 4 + 2] && \
+			    d == orders[j * 4 + 3])
+			    break 
+		    if (j < n) continue
+		    orders[n * 4 + 0] = a
+		    orders[n * 4 + 1] = b
+		    orders[n * 4 + 2] = c
+		    orders[n * 4 + 3] = d
+		    n = n + 1
+		}
+	    }
+	}
+    }
+
+    if (nmono > 0) symmetry = 1
+
+    /* compute integrals of the bases */
+    for (j = 0; j < n; j++) {
+	p = orders[4 * j + 0]
+	q = orders[4 * j + 1]
+	r = orders[4 * j + 2]
+	s = orders[4 * j + 3]
+	/* compute \int_T x^p y^q z^r (1-x-y-z)^s dxdydz */
+	a = p + q + r + s
+	a = 1. / ((a + 1) * (a + 2) * (a + 3))
+	for (i = q; i > 0; i--) a *= i / (p + r + s + i)
+	for (i = r; i > 0; i--) a *= i / (p + s + i)
+	for (i = s; i > 0; i--) a *= i / (p + i)
+	integr[j] = a
+    }
+
+    return n
+}

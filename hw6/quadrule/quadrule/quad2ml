@@ -1,0 +1,131 @@
+#!/bin/bash
+#
+# This script transforms a 3D quadrature rule for use by mass-lumping.c
+#
+# $Id: quad2ml,v 1.4 2012/02/03 07:19:18 zlb Exp $
+
+print () {
+    if test "$k" -lt "$((n-1))"; then
+	echo "    $1,\\"
+    else
+	echo "    $1"
+    fi
+    order[$k]=$2
+    k=$(( k + 1 ))
+}
+
+print1 () {
+    if test "$i" -lt "$((n-1))"; then
+	/bin/echo -n "$1,"
+    else
+	/bin/echo -n "$1"
+    fi
+}
+
+convert () {
+    local i k pass
+    echo 1>&2 "$n orbits."
+    cat <<END
+/* The following macros are generated from the corresponding constrained
+ * quadrature rule by the script 'utils/quad2ml' */
+END
+    # output orbits
+    echo "#define POINTS \\"
+    k=0
+    for ((pass = 0; pass < 4; pass++)); do
+	# pass 0: vertex, pass 1: edge, pass 2: face; pass 3: interior
+	for ((i = 0; i < n; i++)); do
+	    case ${perm[$i]} in
+		#--------------- Vertex nodes
+		Cons31\(0\)|Cons31\(.0\)|Cons31\(0.\)|Cons31\(0.0\))
+		    test "$pass" -eq 0 || continue
+		    print "`echo ${perm[$i]} | \
+			sed -e 's/Cons31(.*)/Cons1(1)/'`" "$i"
+		    dup[$i]=`echo ${dup[$i]} | sed -e 's/Dup31/Dup1/'`
+		    ;;
+		#--------------- Edge nodes
+		Cons22\(*\))
+		    test "$pass" -eq 1 || continue
+		    print "`echo ${perm[$i]} | \
+			sed -e 's/Cons22(.*)/Cons2(0.5)/'`" "$i"
+		    dup[$i]=`echo ${dup[$i]} | sed -e 's/Dup22/Dup2/'`
+		    ;;
+		Cons211\(0,*\)|Cons211\(0.,*\)|Cons211\(.0,*\)|Cons211\(0.0,*\))
+		    test "$pass" -eq 1 || continue
+		    print "`echo ${perm[$i]} | \
+			sed -e 's/Cons211([^,]*,/Cons11(/'`" "$i"
+		    dup[$i]=`echo ${dup[$i]} | sed -e 's/Dup211/Dup11/'`
+		    ;;
+		#--------------- Face nodes
+		Cons31\(0.3*\)|Cons31\(.3*\))
+		    test "$pass" -eq 2 || continue
+		    print "`echo ${perm[$i]} | \
+			sed -e 's/Cons31(.*)/Cons3(1.\/3.)/'`" "$i"
+		    dup[$i]=`echo ${dup[$i]} | sed -e 's/Dup31/Dup3/'`
+		    ;;
+		Cons211\(*,0\)|Cons211\(*,0.\)|Cons211\(*,.0\)|Cons211\(*,0.0\))
+		    test "$pass" -eq 2 || continue
+		    print "`echo ${perm[$i]} | \
+			sed -e 's/Cons211(\([^,]*\),.*)/Cons21(\1)/'`" "$i"
+		    dup[$i]=`echo ${dup[$i]} | sed -e 's/Dup211/Dup21/'`
+		    ;;
+		Cons1111\(*\))
+		    test "$pass" -eq 2 || continue
+		    print "`echo ${perm[$i]} | \
+			sed -e 's/Cons1111([^,]*,/Cons111(/'`" "$i"
+		    dup[$i]=`echo ${dup[$i]} | sed -e 's/Dup1111/Dup111/'`
+		    ;;
+		#--------------- Interior nodes
+		Perm4\(*\)|Perm31\(*\)|Perm22\(*\)|Perm211\(*\)|Perm1111\(*\))
+		    test "$pass" -eq 3 || continue
+		    print "${perm[$i]}" "$i"
+		    ;;
+		*)
+		    echo 1>&2 "Invalid orbit '${perm[$i]}', abort."
+		    exit 1
+		    ;;
+	    esac
+	done
+    done
+
+    # output weights
+    echo "#define WEIGHTS \\"
+    k=0
+    for ((i = 0; i < n; i++)); do
+	print "${dup[${order[$i]}]}" "${order[$i]}"
+    done
+
+    # output list of orbits
+    /bin/echo -n "#define ORBITS	"
+    k=0
+    for ((i = 0; i < n; i++)); do
+	print1 "`echo ${dup[${order[$i]}]} | sed -e 's/Dup\(.*\)(.*)/S\1/'`"
+    done
+    echo
+}
+
+. `dirname $0`/read_rule.func
+
+id=0
+ip=0
+echo 1>&2 "Reading quadrature rule from stdin ..."
+read_rule | sed -e 's/t = d/D/' -e 's/t = p/P/' -e 's/t = c/C/' | \
+while true; do
+    read a
+    if test -z "$a"; then
+	if test "$id" -ne "$ip"; then
+	    echo 1>&2 "Error: # of DupXXX() and PermXXX() macros mismatch."
+	    exit 1
+	fi
+	n=$id
+	convert
+	break
+    fi
+    if test "${a#Dup}" != "$a"; then
+	dup[$id]="$a"
+	id=$(( id + 1 ))
+	continue
+    fi
+    perm[$ip]="$a"
+    ip=$(( ip + 1 ))
+done

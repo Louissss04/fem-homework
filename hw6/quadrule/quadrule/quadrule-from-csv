@@ -1,0 +1,103 @@
+#!/bin/bash
+# 
+# This script processes a general quadrature rule on the standard 1D/2D/3D
+# simplex using 'newton.bc'.
+#
+# The rule is read from stdin as comma or spaceseparated 'x,y,z,w' rows.
+#
+# Note: the script was originally written for processing/checking the
+# quadrature rules reported in:
+#   [1] Jan Ja\'skowiec, N. Sukumar, High-order cubature rules for tetrahedra,
+#	Int J Numer Methods Eng. 2020, 1¨C19.
+#
+# The data from [1] are stored in
+#	bibliography/cubature/Jan_Jaskowiec-N_Sukumar-High-order_cubature_rules_for_tetrahedra-cubatures_tetra64.tar.bz2,
+# see the 'check' file in the tarball for an example usage of this script.
+#
+# $Id: quadrule-from-csv,v 1.24 2020/03/18 10:12:52 zlb Exp $
+
+if test $# -ne 2; then
+    cat 1>&2 <<END
+Usage: $0 dim order [<filename]
+Example: $0 3 5 <cubature_tetra_p5_n14.dat
+Notes:
+  1. The "newton" script is called to check and improve the rule.
+  2. Use 'export QUADRULE_CSVOUT="yes"' to output CSV format (see the "newton"
+     script for other influential enviroment variables.)
+  3. If "\$QUADRULE_P2O" (Point to Orbit) is non-empty and is not 'no', '0',
+     etc., then each input point will be regarded as a symmetry orbit.
+     Moreover, if "\$QUADRULE_P2O" == "fix_weights", then the weights are
+     divided by the corresponding orbit length.
+  4. The enviroment variable 'QUADRULE_DIGITS' controls the precision of float
+     numbers in mpmath.
+  5. The enviroment variable 'QUADRULE_EPS' is used by the python script
+     'quadrule-from-csv.py' for testing equality of two float numbers when
+     identifying symmetry orbits (default: 10^{4 - QUADRULE_DIGITS}).
+  6. The coordinates of the vertices of the simplex may be provided using the
+     enviroment variable 'QUADRULE_VERTS', see README.quadrule for the formats.
+     By default the standard d-simplex {0, e_1, ..., e_d} (d=dim) is assumed.
+END
+    exit 1
+fi
+
+for dir in `dirname $0` . $HOME/phg*/utils; do
+    test -x "$dir/newton" && break
+done
+if ! test -x "$dir/newton"; then
+    echo 1>&2 "Cannot locate the 'newton' script, abort."
+    exit 1
+fi
+if ! test -x "$dir/quadrule-from-csv.py"; then
+    echo 1>&2 "Cannot find '$dir/quadrule-from-csv.py', abort."
+    exit 1
+fi
+
+dim=$1
+order=$2
+
+dump_csv=false;
+test -n "$QUADRULE_CSVOUT" && test "$QUADRULE_CSVOUT" != "0" && \
+	test `echo $QUADRULE_CSVOUT | awk '{print toupper($0)}'` != "NO" && \
+	test `echo $QUADRULE_CSVOUT | awk '{print toupper($0)}'` != "N" && \
+	dump_csv=true
+
+if false; then
+    # directly convert input rows to 'Perm0(...)' and 'Dup0(...)'.
+    sed -e 's/,/ /g' | case $dim in
+	1) awk '{printf "Dup0(%s)\nPerm0(%s)\n", $2, $1}' ;;
+	2) awk '{printf "Dup0(%s)\nPerm0(%s,%s)\n", $3, $1, $2}' ;;
+	3) awk '{printf "Dup0(%s)\nPerm0(%s,%s,%s)\n", $4, $1, $2, $3}' ;;
+    esac
+else
+    # call 'quadrule-from-csv.py' to convert input rows.
+    $dir/quadrule-from-csv.py $dim
+fi | "$dir/newton" $dim $order | \
+    if ! $dump_csv; then
+	#----------------------- Output Dup/Perm macros
+	cat
+    else
+	#----------------------- Output 'x,y,z,w' rows
+	if false; then
+	    "$dir"/quadrule-dump-csv $dim
+	else
+	    awk '{
+		if (match($0, /static FLOAT QUAD_[0-9]*D_P[0-9]*_/)) {
+		    i = 0
+		    next
+		}
+		if (match($0, /^    Dup0/)) {
+		    weights[i] = gensub(/Dup0\(|\)|,| /, "", "g")
+		    #printf "weights[%d] = %s\n", i, weights[i]
+		    i++
+		    next
+		}
+		if (match($0, /^    Perm'$((dim+1))'0/)) {
+		    xyz = gensub(/    Perm'$((dim+1))'0\(/, "", "g")
+		    xyz = gensub(/,|\)/, " ", "g", xyz)
+		    printf "%s%s\n", gensub(/  /, " ", "g", xyz), weights[i]
+		    i++
+		    next
+		}
+	    }'
+	fi
+    fi

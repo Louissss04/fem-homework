@@ -1,0 +1,174 @@
+% LaTeX package for drawing 2D quadrature rules.
+%
+% Example usage:
+%
+%    \quadrule{
+%	\Perm3(.33333333)
+%	\Perm21(.17056930)
+%	\Perm21(.05054723)
+%	\Perm21(.45929259)
+%	\Perm111(.26311283,.00839478)}
+%
+% $Id: quadrule-plot.sty,v 1.11 2020/03/17 06:59:39 zlb Exp $
+
+% Note: comment out the next line to not use TeXDraw
+%\RequirePackage{texdraw}
+\RequirePackage{color}
+
+\def\colorPerm{\@ifnextchar3\colorPerm@\colorPerm@@}
+\def\colorPerm@#1{\color{cyan}\ignorespaces}
+\def\colorPerm@@{\@ifnextchar2\colorPerm@@@\colorPerm@@@@}
+\def\colorPerm@@@#1#2{\color{blue}\ignorespaces}
+\def\colorPerm@@@@{\@ifnextchar1\colorPerm@@@@@\colorPerm@@@@@@}
+\def\colorPerm@@@@@#1#2#3{\color{red}\ignorespaces}
+\def\colorPerm@@@@@@#1{\color{green}\ignorespaces}
+
+\def\numberPerm{\@ifnextchar3\numberPerm@\numberPerm@@}
+\def\numberPerm@#1{\arabic{perma}\ignorespaces}
+\def\numberPerm@@{\@ifnextchar2\numberPerm@@@\numberPerm@@@@}
+\def\numberPerm@@@#1#2{\arabic{permb}\ignorespaces}
+\def\numberPerm@@@@{\@ifnextchar1\numberPerm@@@@@\numberPerm@@@@@@}
+\def\numberPerm@@@@@#1#2#3{\arabic{permc}\ignorespaces}
+\def\numberPerm@@@@@@#1{\arabic{permd}\ignorespaces}
+
+\newcounter{perma}	% Perm3
+\newcounter{permb}	% Perm21
+\newcounter{permc}	% Perm111
+\newcounter{permd}	% Perm0
+
+\ifx\toepstrue\undefined
+  \ifx\includegraphics\undefined \else \def\use@eps{}\fi
+\else
+  % make use of the \iftoeps macros from cctslides.sty
+  % FIXME: with \toepstrue and the following 2 lines uncommented, one gets a
+  %	   warning about missing \fi.
+  %%%\def\tmptmp{\fi}
+  %%%\iftoeps \def\use@eps{}\tmptmp
+\fi
+
+\let\colorhook\relax
+\def\markdot(#1,#2){\put(#1,#2){\vbox to 0pt{\vss
+	\hbox to 0pt{\hss${\colorhook\bullet}$\hss}\vss}}}
+
+% Perm3 ==> \PermA
+\def\PermA(#1){\addtocounter{perma}{1}%
+  {\def\colorhook{\colorPerm3}\markdot(1000,500)}}
+
+% Cons21, Perm21 ==> \PermB
+\def\PermB(#1){\addtocounter{permb}{1}%
+  {\def\colorhook{\colorPerm21}%
+  % (a*0+a*2000+(1-2*a)*1000, a*0+a*0+(1-2*a)*1500) = (1000,1500-3000*a)
+  \@tempdima=#1pt \multiply\@tempdima by 3000
+	\advance\@tempdima by 0.5\@tempdimb \divide \@tempdima by \@tempdimb
+	\@tempcntb=1500 \advance\@tempcntb by -\@tempdima
+  \markdot(1000,\the\@tempcntb)
+  % (a*0+(1-2*a)*2000+a*1000, a*0+(1-2*a)*0+a*1500) = (2000-3000*a, 1500*a)
+  \@tempdima=#1pt \multiply\@tempdima by 3000 
+	\advance\@tempdima by 0.5\@tempdimb \divide \@tempdima by \@tempdimb
+	\@tempcnta=2000 \advance\@tempcnta by -\@tempdima
+  \@tempdima=#1pt \multiply\@tempdima by 1500
+	\advance\@tempdima by 0.5\@tempdimb \divide \@tempdima by \@tempdimb
+	\@tempcntb=\@tempdima
+  \markdot(\the\@tempcnta,\the\@tempcntb)
+  % ((1-2*a)*0+a*2000+a*1000, (1-2*a)*0+a*0+a*1500) = (3000*a, 1500*a)
+  \@tempdima=#1pt \multiply\@tempdima by 3000
+	\advance\@tempdima by 0.5\@tempdimb \divide \@tempdima by \@tempdimb
+	\@tempcnta=\@tempdima
+  \@tempdima=#1pt \multiply\@tempdima by 1500
+	\advance\@tempdima by 0.5\@tempdimb \divide \@tempdima by \@tempdimb
+	\@tempcntb=\@tempdima
+  \markdot(\the\@tempcnta,\the\@tempcntb)}}
+
+% Cons111, Perm111 ==> \PermC
+\def\PermC(#1,#2){\addtocounter{permc}{1}%
+  {\def\colorhook{\colorPerm111}\PermCC(#1,#2)\PermCC(#2,#1)}}
+\def\PermCC(#1,#2){%
+  % (a*0+b*2000+(1-a-b)*1000, a*0+b*0+(1-a-b)*1500)
+  %	= (1000*(1-a+b), 1500*(1-a-b))
+  \@tempdima=1pt \advance\@tempdima by -#1pt \advance\@tempdima by #2pt
+	\multiply\@tempdima by 1000
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcnta=\@tempdima
+  \@tempdima=1pt \advance\@tempdima by -#1pt \advance\@tempdima by -#2pt
+	\multiply\@tempdima by 1500
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcntb=\@tempdima
+  \markdot(\the\@tempcnta,\the\@tempcntb)
+  % (a*0+(1-a-b)*2000+b*1000, a*0+(1-a-b)*0+b*1500)
+  %	= (1000*(2-2*a-b), 1500*b)
+  \@tempdima=1pt \advance\@tempdima by -#1pt \multiply\@tempdima by 2
+	\advance\@tempdima by -#2pt \multiply\@tempdima by 1000
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcnta=\@tempdima
+  \@tempdima=#2pt \multiply\@tempdima by 1500
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcntb=\@tempdima
+  \markdot(\the\@tempcnta,\the\@tempcntb)
+  % ((1-a-b)*0+a*2000+b*1000, (1-a-b)*0+a*0+b*1500)
+  %	= (1000*(2*a+b), 1500*b)
+  \@tempdima=#1pt \multiply\@tempdima by 2 \advance\@tempdima by #2pt
+	\multiply\@tempdima by 1000
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcnta=\@tempdima
+  \markdot(\the\@tempcnta,\the\@tempcntb)}
+
+% Cons0, Perm0 ==> \PermD
+\def\PermD(#1,#2){\addtocounter{permd}{1}{\def\colorhook{\colorPerm0}%
+  % (a*0+b*2000+(1-a-b)*1000, a*0+b*0+(1-a-b)*1500)
+  %	= (1000*(1-a+b), 1500*(1-a-b))
+  \@tempdima=1pt \advance\@tempdima by -#1pt \advance\@tempdima by #2pt
+	\multiply\@tempdima by 1000
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcnta=\@tempdima
+  \@tempdima=1pt \advance\@tempdima by -#1pt \advance\@tempdima by -#2pt
+	\multiply\@tempdima by 1500
+	\advance\@tempdima by 0.5\@tempdimb \divide\@tempdima by \@tempdimb
+	\@tempcntb=\@tempdima
+  \markdot(\the\@tempcnta,\the\@tempcntb)}}
+
+\long\def\quadrule#1{\bgroup
+  \@tempdimb=1pt
+   \setcounter{perma}{0}
+   \setcounter{permb}{0}
+   \setcounter{permc}{0}
+  \begin{picture}(2000,1500)
+  \ifx\use@eps\undefined
+    \ifx\drawdim\undefined
+      %---------------- Use standard LaTeX commands to draw the triangle
+      \put(0,0){\line(2,3){1000}}
+      \put(0,0){\line(1,0){2000}}
+      \put(2000,0){\line(-2,3){1000}}
+      % The central lines
+      \put(0,0){\line(2,1){1500}}
+      \put(2000,0){\line(-2,1){1500}}
+      \put(1000,1500){\line(0,-1){1500}}
+    \else
+      %---------------- Use TeXDraw to draw the triangle
+      \put(0,0){\begin{texdraw}
+	\drawdim \unitlength \linewidth 0.01pt %
+	\move(0 0) \lvec(2000 0) \lvec(1000 1500) \lvec(0 0)
+	\move(0 0) \lvec(1500 750)
+	\move(2000 0) \lvec(500 750)
+	\move(1000 1500) \lvec(1000 0)
+      \end{texdraw}}
+    \fi
+  \else
+    %---------------- Use quadrule-plot.eps
+    \put(0,0){\includegraphics[width=2000\unitlength]
+			      {../utils/quadrule-plot.eps}}
+  \fi
+  %---------------------------------------------------------------------
+  \def\Perm##1(##2){\ifnum ##1=3 \PermA(##2)\else
+    \ifnum ##1=21 \PermB(##2)\else
+    \ifnum ##1=111 \PermC(##2)\else
+    \ifnum ##1=0 \PermD(##2) \else
+    \errmessage{Error: invalid macro Perm##1 (only 2D macros are allowed)}
+    \fi\fi\fi\fi}
+  \let\perm\Perm
+  \let\Cons\Perm
+  \let\cons\Perm
+  #1
+  %---------------------------------------------------------------------
+\end{picture}\egroup}
+
+\endinput

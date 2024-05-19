@@ -1,0 +1,36 @@
+\documentclass{article}
+% uncomment the next line to use quadrule-plot.eps
+%\usepackage{graphicx}
+\usepackage{quadrule-plot}
+\pagestyle{empty}
+\begin{document}
+
+\begin{center}
+\unitlength=0.005cm
+\large
+\quadrule{\expandafter\ifx\csname inputfile\endcsname\relax
+    \Perm21(0.5)
+    \Perm21(0)
+    \Perm21(0.03123488783242562)
+    \Perm21(0.09100115583848591)
+    \Perm21(0.233132086450851)
+    \Perm21(0.4409325873771707)
+    \Perm21(0.3804291711354159)
+    \Perm111(0, 0.06264708830855249)
+    \Perm111(0, 0.6697053428909213)
+    \Perm111(0, 0.1812222832910387)
+    \Perm111(0.1188029237719365, 0.3161036203426842)
+    \Perm111(0.1114077181644914, 0.1924921925542844)
+    \Perm111(0.03643030837862099, 0.5625681058369352)
+    \Perm111(0.03555003198212131, 0.7155089419754278)
+    \Perm111(0.03100366084395608, 0.1220804209081829)
+  \else
+    \input \inputfile
+  \fi}\\[5pt]
+Number of orbits:
+{\colorPerm3 Perm3=\numberPerm3},
+{\colorPerm21 Perm21=\numberPerm21},
+{\colorPerm111 Perm111=\numberPerm111}.
+\end{center}
+
+\end{document}

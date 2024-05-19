@@ -1,0 +1,394 @@
+The file 'quadrule.c' is a C program for computing symmetric numerical
+quadrature rules on triangles and tetrahedra.
+
+
+
+----------------------
+Compiling the program
+----------------------
+
+Edit the file 'Makefile' to set appropriate C and Fortran compilers, options,
+and libraries, then type 'make'.
+
+
+
+--------------------
+Running the program
+--------------------
+
+	% quadrule dim order [[+]npoints [stars] [[+]ntries]] -- [PETSc args]
+
+where
+  'dim' should be 1 (for [0,1]), 2 (for triangle) or 3 (for tetrahedron);
+  'order' is the order of the quadrature rule to compute;
+  'npoints' is the number of points for the quadrature rule;
+  'ntries' is the number of initial guesses to try; and
+  'stars' specifies the symmetry stars (orbits) to try.
+
+If 'npoint' is preceded by '+' then the number of points is set to the default
+number of points plus 'npoints'.
+
+By default the program will stop when good rules are found. But if 'ntries'
+is prefixed by '+', then the program won't stop with the finding of good
+rules, and results on non root processes are written to the files
+'quadrule-dim-order-npoints.nodename-pid'. In this case the script
+'quadrule-minwgt.sh' can be used to sort the rules in the output files.
+
+For dim == 1, the symmetry stars are specified by two numbers, giving
+the number of stars of type s2 and s11 respectively. For example,
+'quadrule 1 5 +0 1 2' means using the stars 1*s2 + 2*s11.
+Note that in 1D the numbers of stars are uniquely determined by npoints.
+npoints can also be omitted and in this case the program will produce a
+Gauss-Legendre quadrature rule.
+
+For dim == 2, the symmetry stars are specified by three numbers, giving
+the number of stars of type s3, s21 and s111 respectively. For example,
+'quadrule 2 5 +0 1 2 0' means using the stars 1*s3 + 2*s21.
+
+For dim == 3, the symmetry stars are specified by five numbers, giving
+the number of stars of type s4, s31, s22, s211 and s1111 respectively.
+For example, 'quadrule 3 5 14 0 2 1 0 0' means using the stars 2*s31 + 1*s22.
+
+Here are some examples:
+	% quadrule 1 5
+		computes the 3-point, order 5 Gauss-Legendre quadrature rule
+
+	% quadrule 1 5 4
+		computes a 4-point, order 5 quadrature rule
+
+	% quadrule 2 11 28
+		computes a 2D 28-point, order 11 rule
+
+	% quadrule 3 5
+		computes a 3D order 5 rule, using default number of points
+
+	% quadrule 3 5 +1
+		computes a 3D order 5 rule, number of points = default + 1
+
+	% quadrule 3 5 15 1 2 1 0 0
+		computes a 3D 15-point order 5 rule using the symmetry stars
+		1*s4 + 2*s31 + 1*s22 + 0*s211 + 0*s1111
+
+	% quadrule 3 5 +1 100
+		tries to find a 3D order 5 rule using at most 100 initial
+		guesses.
+
+Individual numbers in the stars can be ommitted by using a colon in their
+places. For example, 'quadrule 3 5 15 : 2 : 0 0' only sets the number of
+s31 orbits to '2' (and quadrule will try all possible combinations for the
+other orbits).
+
+
+
+-----------------------------
+Partially constrained orbits
+-----------------------------
+
+Users can require a certain number of orbits to be restricted either on the
+vertices, edges or faces by adding 'constraints' in the symmetry stars.
+A constraint is specified by appending ':#' (a colon followed by a number)
+to a number in the stars. For different orbit types '#' can take different
+values and has different meanings, as described in the following table:
+
+ Dim	Star		Value and meaning of '#'
+ ------------------------------------------------------------------------------
+  1D	s11:#		1: vertex, Cons11(0) (Gauss-Lobatto rule)
+ ------------------------------------------------------------------------------
+  2D	s21:#		1: vertex, Cons1(1) => Cons21(0)
+			2: edge center, Cons2(0.5) => Cons21(0.5)
+			3: vertex & edge center
+  	s111:#		number of edge orbits of type s11,
+			Cons11(a) => Cons111(a,0)
+ ------------------------------------------------------------------------------
+  3D	s31:#		1: vertex, Cons1(1) => Cons31(0),
+			2: face center, Cons3(1/3) => Cons31(1/3),
+			3: vertex & face center
+  	s22:#		1: edge center, Cons2(0.5) => Cons22(0.5)
+  	s211:#:#	1st '#': number of edge orbits of type s11,
+				 Cons11(a) => Cons211(0,a)
+			2nd '#': number of face orbits of type s21,
+				 Cons21(a) => Cons211(a,0)
+  	s1111:#		number of face orbits of type s111,
+			Cons111(a,b) => Cons1111(a,b,0)
+ ------------------------------------------------------------------------------
+
+We call the above constraints `partial constraints' or simply `constraints'
+in which not all abscissas of an orbit are constrained.
+
+For an example on using the partial constraints, see and try out the python
+program 'quadrule-ml', which computes mass-lumping bases [2].
+
+For the 1D case, "quadrule 1 order npoints : :1" can be used to compute the
+Gauss-Lobatto quadrature rule of a given order, where 'order' and 'npoints'
+should satisfy the relationship: 'order' = 2 * 'npoints' - 3. This can also
+be done by providing the predefined orbit 'perm11(0)'. For example, the
+following two commands are equivalent:
+	% ./quadrule 1 9 6 : :1
+	% echo 'perm11(0)' | ./quadrule 1 9 6
+(both commands compute the 8th order Gauss-Lobatto rule)
+
+
+
+--------------------------------
+Predefined orbits and monomials
+--------------------------------
+
+Users can also specify some predefined orbits (fully constrained orbits),
+or monomials in the barycentric coordinates. Predefined orbits and monomials
+can be specified through one of the following files (the first one available
+is effective):
+
+    1. Standard input (stdin), if it contains data at startup and IS NON-EMPTY.
+    2. The file specified by the environment variable 'ORBITS_FILE'.
+    3. The file argv[0].orbits.
+
+Lower dimensional orbits can be supplied as predefined orbits which will be
+automatically raised to dimension `dim'.
+
+Predefined orbits are those who must appear in the output rules.
+
+If predefined monomials are specified, then the set of test functions becomes
+P(order)\otimes \{user-defined monomials\} (instead of P(order), where P(order)
+denotes the set of polynomials of orders <= `order', and the operator \otimes
+denotes the set of products of all pairs of elements from the two operands).
+This new feature can be used to compute mass-lumped finite elements satisfying
+the new condition for the precision of numerical quadrature proposed in [3].
+
+Symbolic expressions, surrounded in curly braces, can be used for the abscissas
+in the predefined orbits. For example:
+	% echo 'perm11({-1/6*sqrt(3)+1/2})' | ./quadrule 2 1 6
+To convert symbolic expressions to FLOATs for numerical computations, the
+GNU bc is used by default. Other symbolic packages such as SageMath or
+octave/MATLAB can also be used, see the SYM2FLOAT macro in quadrule.c.
+Note that the symbolic expressions must comply with the symbolic package used.
+
+When the 'dump' keyword is used, the expressions will appear in the dumped
+equations, which will allow computing symbolic solutions using a symbolic math
+package like SageMath or Mathematica.
+
+
+Examples:
+
+1. Find an order 4 rule including the orbits of a 2D 6-point order 4 rule:
+
+% quadrule 3 4 32 <<END
+Perm21(.44594849091596488631832925388305199)
+Perm21(.09157621350977074345957146340220151)
+END
+
+Since quadrule usually only finds interior points, the resulting rule is an
+3D order 4 rule on the whole, while its restriction on a face is exactly the
+nodes of the specified 2D order 4 rule.
+
+2. The following commands compute the new mass-lumped finite elements in [3]:
+
+############################## Order 2, 15 node element, ML2
+% quadrule 3 0 15 1 2:3 1:1 0 0 <<END
+Mono31(0,1)
+Mono22(1,0)
+Mono31(1,0)
+Mono4(1)
+END
+------------------------------ Using quadrule-ml (mono31(0,1) => mono31(0,2)
+% ./quadrule-ml 3 2 2 3 4
+
+############################## Order 3, 32 node element, ML3
+# Note: solution can be found with:
+#	make CDEFS0="-DUSE_MAPPING=0 -DINDEPENDENT_W=1" quadrule
+% quadrule 3 1 32 0 2:1 0 2:1:1 0 <<END
+Mono31(0,1)
+Mono211(0,2,1)
+Mono211(1,2,0)
+Mono31(1,2)
+END
+------------------------------ Solution:
+	Cons31(0.)
+	Cons211(0.,.314210342418032893883175061743391)
+	Cons211(.215482203135575412599859272982525,0.)
+	Perm31(.166666666666666666666666666666667)
+------------------------------ Using quadrule-ml
+% ./quadrule-ml 3 3 3 4 5
+
+
+############################## Order 4, 65 node element, ML4
+# Note: solution can be found with:
+#	make CDEFS0="-DUSE_EXTREMAL_MEASURE=0" quadrule
+% quadrule 3 2 65 1 4:3 2:1 3:1:2 0 <<END
+Mono31(0,1)
+Mono211(0,2,1)
+Mono22(2,0)
+Mono211(1,2,0)
+Mono211(2,1,0)
+Mono31(2,0)
+Mono31(1,2)
+Mono22(2,1)
+Mono31(2,1)
+Mono4(2)
+END
+------------------------------ Solution:
+	Cons31(0.)
+	Cons211(0.,.17249194077490857535314475496313593)
+	Cons22(.5)
+	Cons211(.14741779690136858426180821049471841,0.)
+	Cons211(.45403952722710673616480685584005258,0.)
+	Cons31(.33333333333333333333333333333333333)
+	Perm31(.12822093162909793115292586197383820)
+	Perm22(.08742182088664352997036484977702327)
+	Perm31(.31240614520708106211729705978204781)
+	Perm4 (.25)
+
+############################## Order 4, 60 node element, ML4a
+# Note: solution can be found with:
+#	make CDEFS0="-DUSE_EXTREMAL_MEASURE=0" quadrule
+% quadrule 3 2 60 0 3:1 2:1 3:1:2 0 <<END
+Mono31(0,1)
+Mono211(0,2,1)
+Mono22(2,0)
+Mono211(1,2,0)
+Mono211(2,1,0)
+Mono31(1,2)
+Mono22(2,1)
+Mono31(2,1)
+END
+------------------------------ Solution:
+	Cons31(0.)
+	Cons211(0.,.16148658334966762839187222355198378)
+	Cons22(.5)
+	Cons211(.14902192884695984835550556230941622,0.)
+	Cons211(.39445919721717828782908721585020459,0.)
+	Perm31(.13020588463725643564034875550580697)
+	Perm22(.06386116838612691411152895029275609)
+	Perm31(.30121792340790865275261948454963855)
+
+############################## Order 4, 61 node element, ML4b
+# Note: solution can be found with:
+#	make CDEFS0="-DUSE_EXTREMAL_MEASURE=0" quadrule
+% quadrule 3 2 61 1 3:1 2:1 3:1:2 0 <<END
+Mono31(0,1)
+Mono211(0,2,1)
+Mono22(2,0)
+Mono211(1,2,0)
+Mono211(2,1,0)
+Mono31(1,2)
+Mono22(2,1)
+Mono31(2,1)
+Mono4(2)
+END
+------------------------------ Solution:
+	Cons31(0.)
+	Cons211(0.,.20016281047078478593140176926489303)
+	Cons22(.5)
+	Cons211(.13973509722383662156257565315513392,0.)
+	Cons211(.43194362351776820994051366110052126,0.)
+	Perm31(.12822093162909793115292586197383820)
+	Perm22(.08742182088664352997036484977702327)
+	Perm31(.31240614520708106211729705978204781)
+	Perm4 (.25)
+
+
+3. Other results
+	./quadrule-ml 3 2 2 2 5		# finds a 14-point order 2 basis
+
+	many solutions, one of them is:
+3D 14 point order 0 rule (0:2:1:0:0, 264354 tries, 2 evals), error = 8.088e-16
+        mono31(0,2)
+        mono22(0,1)
+        mono31(1,2)
+    Cons31(0)
+    Dup31(0.0243131826314871)
+    Perm31(0.316851121210579)
+    Dup31(0.1892161597523605)
+    Cons22(0.5)
+    Dup22(0.0243137717441016)
+
+
+------------------------------------------------------
+Dumping the moment equations for symbolic computations
+------------------------------------------------------
+
+If the keyword 'dump' is specified as the first argument of the 'quadrule'
+program, numerical solutions for the quadrature rule will not be computed,
+instead, the program will output the unkowns and moment equations, which can
+then be solved using a symbolic math package to find symbolic solutions of the
+quadrature rule. The 'dump' keyword can optionally specify the output format
+and filename in the form 'dump=format:filename'. If 'format:' is omitted,
+the SageMath format will be used by default. If 'filename' is ommitted or is
+empty, stdout will be used. For example, to get a symbolic solution for the
+3-point Legendre-Gauss rule:
+	% ./quadrule dump=sage:~/tmp.sage 1 5 3
+	% sage ~/tmp.sage
+(available formats can be found by running 'quadrule' with no argument)
+
+
+
+-------------------
+The GNU bc scripts
+-------------------
+
+The file 'newton' is a bash script which performs a few Newton iterations
+using high precision arithmetics provided by the GNU bc language to improve
+the precision of a quadrature rule. Please see comments in the file for its
+usage.
+
+Influential environment variables:
+	QUADRULE_SCALE, QUADRULE_TOL, QUADRULE_DIGITS, QUADRULE_LEAST_SQUARE
+
+
+
+--------------------
+Other tools, scripts
+--------------------
+
+1. quadrule-dump-csv
+
+This scripts prints the list of quadrature points ((x,y,z)) and weights (w) for
+the standard tetrahedron of a quadrature rule described using the Perm### and
+Dup### macros in CSV (comma-separated-values) format ('x,y,z,w' rows).
+
+Influential environment variable:
+	QUADRULE_DIGITS		- controls the precision (digits)
+	QUADRULE_NOEXP		- if defined, symmetry orbits are not expanded
+				  (output one point for each orbit)
+
+2. quadrule-from-csv
+
+This scripts converts a list of quadrature points and weights of a quadrature
+rule in CSV format ('x,y,z,w' rows) into Perm### and Dup### macros, then calls
+the 'newton' script to check and improve the rule, then prints the results in
+either Perm### and Dup### macros, or CSV format if the environment variable
+QUADRULE_CSVOUT is defined and is not equal to 'no', 'n' or '0'.
+
+Influential environment variable (besides those for the 'newton'):
+	QUADRULE_DIGITS		- controls the precision (digits)
+	QUADRULE_EPS		- for testing equality of two numbers
+	QUADRULE_CSVOUT		- whether output CSV format
+	QUADRULE_P2O		- whether perform symmetry expansion, i.e.,
+				  turn each point into a symmetry orbit.
+				  If "QUADRULE_P2O" == "fix_weights", then
+				  the weight for each orbit will be divided by
+				  the orbit length.
+	QUADRULE_VERTS		- if set, defines the vertices of the simplex
+				  in one of the formats, e.g. for a triangle:
+					(x0,y0);(x1,y1);(x2,y2)
+					x0,y0;x1,y1;x2,y2
+					x0,y0,x1,y1,x2,y2
+					x0 y0 x1 y1 x2 y2
+				  (space, comma or semicolon separated values,
+				  optional parentheses are allowed), or:
+					file:filename
+				  where the file 'filename' should contain
+For example, for reading data for an equilateral triangle:
+QUADRULE_VERTS="`echo 'scale=34;-1;-1/sqrt(3);0;2/sqrt(3);1;-1/sqrt(3)'|bc -l`"
+
+
+
+
+----------
+Reference
+----------
+
+[1] L. Zhang, T. Cui, and H. Liu. "A set of symmetric quadrature rules on triangles and tetrahedra", Journal of Computational Mathematics, Vol. 27, No. 1, 2009, pp. 89-96.
+
+[2] W. Leng, T. Cui, D. Lin, S. Ma, and L. Zhang, "High order mass-lumping finite elements on triangles and tetrahedra", Numer. Math. Theor. Meth. Appl., Vol. 10, No. 2, May 2017, pp. 331-350.
+
+[3] S. Geevers, W.A. Mulder, and J.J.W. Van Der Vegt, "New higher-order mass-lumped tetrahedral elements for wave propagation modelling", SIAM J. Sci. Comput., 2018.

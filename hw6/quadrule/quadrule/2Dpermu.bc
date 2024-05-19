@@ -1,0 +1,62 @@
+#!/usr/bin/bc -lq
+#
+# $Id: 2Dpermu.bc,v 1.2 2006/05/18 07:46:02 zlb Exp $
+
+dim = 2
+vol = 1 / 2
+
+mat0 = 0; vec0 = 0
+mat[0] = mat0; vec[0] = vec0
+nabsc[0] = dim
+npnts[0] = 1
+perm_mat[mat0++] = 1; perm_mat[mat0++] = 0
+perm_mat[mat0++] = 0; perm_mat[mat0++] = 1
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 0
+
+mat[3] = mat0
+vec[3] = vec0
+nabsc[3] = 0
+npnts[3] = 1
+perm_vec[vec0++] = 1/3; perm_vec[vec0++] = 1/3;
+
+mat[21] = mat0
+vec[21] = vec0
+nabsc[21] = 1
+npnts[21] = 3
+perm_mat[mat0++] = 1; perm_mat[mat0++] = 1
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 0
+
+perm_mat[mat0++] = 1; perm_mat[mat0++] = -2
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 1
+
+perm_mat[mat0++] = -2; perm_mat[mat0++] = 1
+perm_vec[vec0++] = 1; perm_vec[vec0++] = 0
+
+mat[111] = mat0
+vec[111] = vec0
+nabsc[111] = 2
+npnts[111] = 6
+perm_mat[mat0++] = 1; perm_mat[mat0++] = 0
+perm_mat[mat0++] = 0; perm_mat[mat0++] = 1
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 0
+
+perm_mat[mat0++] = 0; perm_mat[mat0++] = 1
+perm_mat[mat0++] = 1; perm_mat[mat0++] = 0
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 0
+
+perm_mat[mat0++] = 1; perm_mat[mat0++] = -1
+perm_mat[mat0++] = 0; perm_mat[mat0++] = -1
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 1
+
+perm_mat[mat0++] = -1; perm_mat[mat0++] = 1
+perm_mat[mat0++] = -1; perm_mat[mat0++] = 0
+perm_vec[vec0++] = 1; perm_vec[vec0++] = 0
+
+perm_mat[mat0++] = 0; perm_mat[mat0++] = -1
+perm_mat[mat0++] = 1; perm_mat[mat0++] = -1
+perm_vec[vec0++] = 0; perm_vec[vec0++] = 1
+
+perm_mat[mat0++] = -1; perm_mat[mat0++] = 0
+perm_mat[mat0++] = -1; perm_mat[mat0++] = 1
+perm_vec[vec0++] = 1; perm_vec[vec0++] = 0
+
