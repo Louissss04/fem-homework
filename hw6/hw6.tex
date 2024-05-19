@@ -1,0 +1,139 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.05.13}	
+	
+	\begin{enumerate}
+		\item 给出三次Lagrange元的局部插值误差 $\left\|u-\Pi_K u\right\|_{\ell, K}(0 \leq \ell \leq 1)$ 估计结果
+		
+		$$
+		\|u - \Pi_K u\|_{0,K} \leq C h^4 |u|_{4,K} $$
+		$$
+		\|u - \Pi_K u\|_{1,K} \leq C h^3 |u|_{4,K}
+		$$
+		
+		\item 给出三次Lagrange元求解Poisson问题的解的最优能量 $\left(H^1\right)$ 范数误差估计 $\left(\right.$ 最高几阶)、凸区域情形的 $L^2$ 范数误差估计结果, 具有最高正则性假设下 (即给出 $s$ 的最大值)的负范数估计.
+		
+		$H^1$误差估计：
+		$$
+		\left\|u-u_h\right\|_{1,\Omega}\leq Ch^3\left|u\right|_{4,\Omega}
+		$$
+		
+		$L^2$误差估计：(假设区域光滑或凸)
+		$$
+		\left\|u-u_h\right\|_{0,\Omega}\leq Ch\left\|u-u_h\right\|_{1,\Omega}\leq Ch^4\left|u\right|_{4,\Omega}
+		$$
+		
+		负范数估计：(假设正则性、逼近性)
+		$$
+		\left\|u-u_h\right\|_{-2,\Omega}\leq Ch^{3}\left\|u-u_h\right\|_{1,\Omega}\leq Ch^6\left|u\right|_{4,\Omega}
+		$$
+		
+		\item 利用对偶论证的方法证明重调和问题中的 $H^1$ 误差估计定理
+		
+		\begin{proof}
+			设 $\phi_g \in V$ 是变分问题
+			$$
+			a\left(v, \phi_g\right)=(g, v), \forall v \in V
+			$$
+			
+			的解. 有
+			$$
+			\begin{aligned}
+				\left(g, u-u_h\right) & =a\left(u-u_h, \phi_g\right) \\
+				& = a\left(u-u_h, \phi_g-v_h\right) \qquad \qquad  \forall v_h \in V_h \\
+				& \leq\left\|u-u_h\right\|_{2, \Omega} \inf _{v_h \in V_h}\left\|\phi_g-v_h\right\|_{2, \Omega}
+			\end{aligned}
+			$$
+			
+			再利用
+			$$
+			\left\|u-u_h\right\|_{1, \Omega}=\sup _{0 \neq g \in H^{-1}(\Omega)} \frac{\left(g, u-u_h\right)}{\|g\|_{-1, \Omega}}
+			$$
+		\end{proof}
+		
+		\item 证明二阶积分公式
+		$$
+		\int_K \phi \mathrm{dx} \approx \frac{S_K}{3} \sum_{i=4}^6 \phi\left(a_i\right)
+		$$
+		
+		对 $\phi \in P_2(K)$ 精确成立
+		
+		\begin{proof}
+			令
+			$$
+				\phi_i=\lambda_i(2\lambda_i-1),\quad1\leq i\leq3
+			$$	
+			$$
+			\phi_4=4\lambda_2\lambda_3,\phi_5=4\lambda_3\lambda_1,\phi_6=4\lambda_1\lambda_2
+			$$
+			
+			对任意多项式$\phi\in P_2(K)$,有
+			
+			$$
+			\phi=\sum_{i=1}^3\phi(a_i)\phi_i+\sum_{i=1}^3\phi(m_i)\phi_{i+3}, 
+			$$
+
+			由积分公式
+			$$
+			\iint_{K}\lambda_{1}^{m}\lambda_{2}^{n}\lambda_{3}^{k}\mathrm{d}x\mathrm{d}y=2S_K\frac{m!\cdot n!\cdot k!}{(m+n+k+2)!}.
+			$$
+			
+			代入计算可得
+			
+				$$
+			\int_K \phi \mathrm{dx} \approx \frac{S_K}{3} \sum_{i=4}^6 \phi\left(a_i\right)
+			$$
+		\end{proof}
+		\item 写出Linbo Zhang 2009论文中六点积分公式, 并说明阶数（积分点和权重可保留8位小数)
+		
+		$$
+		|T|\sum_{i=1}^6f(p_i)w_i=\int_Tf(x)dx
+		$$
+		
+		其中，积分点、权重以及对应阶数由下列表格给出(积分点由重心坐标表示，轮换对称)：
+		
+		\begin{table}[h]
+			\centering
+			\begin{tabular}{|ccc|}
+				\hline
+				\multicolumn{3}{|c|}{\textbf{6-point order 3 rule on triangle}}                                                                 \\ \hline
+				\multicolumn{1}{|c|}{Orbit} & \multicolumn{1}{c|}{Abscissas}                                                       & Weight     \\ \hline
+				\multicolumn{1}{|c|}{$S_{111}$}  & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}0.23193337\\ 0.10903901\end{tabular}} & 0.16666667 \\ \hline
+			\end{tabular}
+		\end{table}
+		
+		\begin{table}[h]
+			\centering
+			\begin{tabular}{|ccc|}
+				\hline
+				\multicolumn{3}{|c|}{\textbf{6-point order 4 rule on triangle}}            \\ \hline
+				\multicolumn{1}{|c|}{Orbit} & \multicolumn{1}{c|}{Abscissas}  & Weight     \\ \hline
+				\multicolumn{1}{|c|}{$S_{21}$}   & \multicolumn{1}{c|}{0.09157621} & 0.10995174 \\ \hline
+				\multicolumn{1}{|c|}{$S_{21}$}   & \multicolumn{1}{c|}{0.44594849} & 0.22338159 \\ \hline
+			\end{tabular}
+		\end{table}
+	\end{enumerate}
+	
+	
+\end{document}
+
