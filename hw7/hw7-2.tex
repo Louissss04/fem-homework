@@ -1,0 +1,188 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.05.23}	
+	
+	\begin{enumerate}
+		\item 证明二维单元$K$上迹定理
+		$$\begin{aligned}&|e|^{-1}\|\xi\|_{0,e}^{2}\leq C\Big(h_{K}^{-2}\|\xi\|_{0,K}^{2}+|\xi|_{1,K}^{2}\Big),\:\forall\xi\in H^{1}(K)\end{aligned}$$
+		Hint: 利用仿射变换以及尺度(scailing)技巧
+		
+		\begin{proof}
+			考虑参考单元$\hat{K}$,满足$|\hat{e}|=1$.
+			
+			\begin{equation*}
+				\begin{aligned}
+					C(\|\hat{\xi}\|_{0,\hat{K}}^{2}+|\hat{\xi}|_{1,\hat{K}}^{2}) = C\|\hat{\xi}\|_{1,\hat{K}}^2 \geq \|\hat{\xi}\|^2_{0,\hat{e}} = \int_{\hat{e}} \hat{\xi}^2 d\hat{s} = \int_{e}  \xi^2 \frac{|\hat{e}|}{|e|} ds = |e|^{-1}\|\xi\|_{0,e}^{2} 
+				\end{aligned}
+			\end{equation*}
+			
+			结合尺度变换关系以及
+			
+			$$
+			|\hat{v}|_{m,p,\hat{K}}\leq C\left\|B\right\|^m|\mathrm{det}B|^{-1/p}|v|_{m,p,K}
+			$$
+			
+			代入$p = 2, m= 2$即得证.
+			
+		\end{proof}
+		
+		\item 对于一维单元e证明
+		$$\begin{aligned}\left\|\xi-P_{e}^{0}\xi\right\|_{0,e}&\leq\frac{|e|}\pi|\xi|_{1,e}\:,\:\forall\xi\in H^1(e)\\\left\|\xi\right\|_{0,e}&\leq\frac{|e|}\pi|\xi|_{1,e}\:,\:\forall\xi\in H_0^1(e)\end{aligned}$$
+		
+		Hint:考虑特征值问题 $-\frac{\partial^2 \xi}{\partial s^2} = \lambda \xi$在$\xi \in H^1(e)$和$\xi \in H_0^1(e)$的特征函数以及最小特征值
+		
+		\begin{proof}
+		
+			只需证第二个式子，不妨设一维单元$e = [0,L]$.
+			
+			考虑$-\xi ^{\prime\prime} = \lambda \xi, \xi(0) = \xi(L) = 0$的特征值$\lambda = \displaystyle \frac{n^2 \pi^2}{L^2} , n \in \mathbb{Z^*}$.
+			
+			有
+			
+			$$\int_0^L - \xi^{\prime\prime} \xi d\xi =\lambda \int_0^L \xi^2 d\xi$$
+			分部积分
+			$$\int_0^L (\xi^{\prime})^2 d\xi  =\lambda \int_0^L \xi^2 d\xi  $$
+			$$\lambda \|\xi\|_{0,e}^2 = |\xi|_{1,e}^2$$
+			
+			注意到最小特征值$\lambda = \frac{\pi^2}{L^2}$,进而
+			
+			$$\frac{\pi^2}{L^2} \|\xi\|_{0,e}^2 \leq |\xi|_{1,e}^2$$
+			
+		\end{proof}
+		
+		
+		
+		\item 证明
+		$$\|v-P_ev\|_{0,e}=\inf_{c\in\mathbb{R}}\|v-c\|_{0,e}$$
+		
+		\begin{proof}
+			
+			$$\begin{aligned}
+				\|v-P_e v\|_{0,e}^2 &= \int_e \left(v-\frac{1}{|e|}(\int_e v ds)^2\right)ds\\
+				& = \int_e v^2 ds - \frac{1}{|e|}(\int_e v ds)^2\\
+				& \geq \int_e v^2 ds - 2c \int_e v ds + c^2 |e| \qquad \text{（均值不等式）}\\
+				& = \int_e (v-c)^2 ds\\
+				& = \|v-c\|_{0,e}^2
+			\end{aligned}$$
+			
+		\end{proof}
+		
+		\item 证明Morley元的$H^{1}$范数误差估计
+		
+		\begin{proof}
+			令$\Pi_{h_0}^p,\Pi_{h_0}^{p,2}$为一次Lagrange元与二次Lagrange元的协调元插值算子. 记$w_h = \Pi_{h_0}^p u$.
+			
+			由协调元插值误差估计以及庞加莱不等式，有
+			\begin{equation}\label{eq1}
+				\begin{aligned}
+					\begin{aligned}\|u-u_h\|_{1,h}\end{aligned}& \leqslant\|u-w_h\|_{1,h}+\|\Pi_{h0}^{p,2}(w_h-u_h)\|_{1,\Omega}  \\
+					&+\|w_h-u_h-\Pi_{h0}^{p,2}(w_h-u_h)\|_{1,h} \\
+					&\lesssim|u-w_h|_{1,h}+h|w_h-u_h|_{2,h}+\|\Pi_{h0}^{p,2}(w_h-u_h)\|_{1,\Omega} \\
+					&\lesssim h^2|u|_{3,\Omega}+\|\Pi_{h0}^{p,2}(w_h-u_h)\|_{1,\Omega},
+				\end{aligned}
+			\end{equation}
+			
+			
+			
+			下面估计$\|\Pi_{h0}^{p,2}(w_h-u_h)\|_{1,\Omega}$,注意到:
+			
+			\begin{equation}\label{eq2}
+				\|\Pi_{h0}^{p,2}(w_h-u_h)\|_{1,\Omega}=\sup_{0\neq g\in L^2(\Omega)}\frac{|(g,\Pi_{h0}^{p,2}(w_h-u_h))|}{\|g\|_{-1,\Omega}}
+			\end{equation}
+			
+			
+			只需估计$|(g,\Pi_{h0}^{p,2}(w_h-u_h))|$, 对$g\in L^2(\Omega)$,令$\phi_g\in H_0^2(\Omega)$和$\phi_{gh}\in V_{h_0}$分别是下面问题的解：
+			$$a(v,\phi_g)=(g,v),\quad\forall v\in H_0^2(\Omega),$$
+			
+			$$a_h(v_h,\phi_{gh})=(g,\Pi_{h0}^{p,2}v_h),\quad\forall v_h\in V_{h0}.$$
+			
+			
+			由$H^2$范数误差估计以及椭圆方程正则性结果，得
+			
+			\begin{equation}\label{eq3}
+				|\phi_g-\phi_{gh}|_{2,h}\lesssim h|\phi_g|_{3,\Omega},\quad\|\phi_g\|_{3,\Omega}\lesssim\|g\|_{-1,\Omega}
+			\end{equation}
+			
+			
+			我们有
+			$$
+			\begin{aligned}
+				(g,\Pi_{h0}^{p,2}(w_h-u_h))& \begin{aligned}=a_h(w_h-u_h,\phi_{gh})\end{aligned}  \\
+				&=a_h(u-w_h,\phi_g-\phi_{gh})+\left(a_h(u,\phi_{gh}-\phi_g)-(f,\phi_{gh}-\phi_g)\right) \\
+				&+\Big(a_h(w_h-u,\phi_g)-(g,\Pi_{h0}^{p,2}(w_h-u))\Big)+(g,\Pi_{h0}^{p,2}(w_h-u)).
+			\end{aligned}
+			$$
+			
+			下面只需要对上式右侧的四项分别估计：
+			
+			\textbf{对第一项}，由算子有界性、协调元插值误差以及\eqref{eq3},有
+			
+			\begin{equation}\label{eq4}
+				|a_h(u-w_h,\phi_g-\phi_{gh})|\lesssim h^2|u|_{3,\Omega}\|g\|_{-1,\Omega}.
+			\end{equation}
+			\textbf{对第四项},有
+			$$|(g,\Pi_{h0}^{p,2}(w_h-u))|\lesssim\|g\|_{-1,\Omega}\|\Pi_{h0}^{p,2}(w_h-u)\|_{1,\Omega}.$$
+			由逆不等式与插值误差估计，有
+			$$\begin{aligned}|\Pi_{h0}^{p,2}(w_{h}-u)|_{1,\Omega}^{2}&=\sum_{T\in T_{h}}|\Pi_{h0}^{p,2}(w_{h}-u)|_{1,T}^{2}\\&\lesssim\sum_{T\in T_{h}}h_{T}^{-2}|\Pi_{h0}^{p,2}(w_{h}-u)|_{0,T}^{2}\\&\lesssim\sum_{T\in T_{h}}h_{T}^{-2}|w_{h}-u|_{0,T}^{2}\lesssim h^{4}|u|_{3,\Omega}^{2},\end{aligned}$$
+			再利用庞加莱不等式，得到
+			\begin{equation}\label{eq5}
+				\|\Pi_{h0}^{p,2}(w_h-u)\|_{1,\Omega}\lesssim h^2|u|_{3,\Omega}
+			\end{equation}
+			
+			\textbf{对第二项}，记
+			$$e_{h1}=\phi_{gh}-\Pi_{h0}^p\phi_g,\quad e_{h2}=\Pi_{h0}^p\phi_g-\phi_g,$$
+			则
+			$$a_h(u,\phi_{gh}-\phi_g)-(f,\phi_{gh}-\phi_g)$$
+			$$=\sum_{i=1}^2\Big(a_h(u,e_{hi})-(f,\Pi_{h0}^pe_{hi})-(f,e_{hi}-\Pi_{h0}^pe_{hi})\Big).$$
+			令$i\in\{1,2\}.$由Morley元相容项误差估计，有
+			$$\left|a_h(u,e_{hi})-(f,\Pi_{h0}^{p,2}e_{hi})\right|\lesssim|u|_{3,\Omega}\left(h|e_{hi}|_{2,h}+|e_{hi}-\Pi_{h0}^{p,2}e_{hi}|_{1,h}\right).$$
+			另一方面，
+			$$|(f,e_{hi}-\Pi_{h0}^{p,2}e_{hi})|\lesssim\|f\|_{0,\Omega}\|e_{hi}-\Pi_{h0}^{p,2}e_{hi}\|_{0,\Omega}.$$
+			由协调元误差估计，得到
+			$$\|e_{h1}-\Pi_{h0}^{p,2}e_{h1}\|_{0,\Omega}+h\|e_{h1}-\Pi_{h0}^{p,2}e_{h1}\|_{1,h}\lesssim h^2|e_{h1}|_{2,h}.$$
+			对于$e_{h2}$,类似于式\eqref{eq5} 有
+			$$\|\Pi_{h0}^{p,2}e_{h2}\|_{1,\Omega}\lesssim h^2|\phi_g|_{3,\Omega}.$$
+			由协调元插值误差，有
+			$$|e_{h2}|_{1,\Omega}\lesssim h^2|\phi_g|_{3,\Omega}.$$
+			$$\|e_{h2}-\Pi_{h0}^{p,2}e_{h2}\|_{0,\Omega}\lesssim\|e_{h2}\|_{0,\Omega}\lesssim h^3|\phi_g|_{3,\Omega}.$$
+			总结上面的讨论得到
+			$$|a_h(u,\phi_{gh}-\phi_g)-(f,\phi_{gh}-\phi_g)|\lesssim h^2(|u|_{3,\Omega}+h\|f\|_{0,\Omega})|\phi_g|_{3,\Omega}.$$
+			结合\eqref{eq3},得到
+			\begin{equation}\label{eq6}
+				|a_h(u,\phi_{gh}-\phi_g)-(f,\phi_{gh}-\phi_g)|\lesssim h^2(|u|_{3,\Omega}+h\|f\|_{0,\Omega})\|g\|_{-1,\Omega}
+			\end{equation}
+			\textbf{对第三项}，与第二项做类似讨论可得
+			\begin{equation}\label{eq7}
+				|a_h(w_h-u,\phi_g)-(g,\Pi_{h0}^{p,2}(w_h-u))|\lesssim h^2|u|_{3,\Omega}\|g\|_{-1,\Omega}.
+			\end{equation}
+			
+			结合式\eqref{eq1}\eqref{eq2}\eqref{eq3}\eqref{eq5}\eqref{eq6}\eqref{eq7},得到Morley元$H^1$误差估计：
+			$$
+			\|u-u_h\|_{1,h}\lesssim h^2\left(|u|_{3,\Omega}+h\|f\|_{0,\Omega}\right).
+			$$
+		\end{proof}
+	\end{enumerate}
+	
+	
+\end{document}
+
