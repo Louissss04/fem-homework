@@ -1,0 +1,166 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm,mathtools}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.05.27}	
+	
+	\begin{enumerate}
+		\item 证明Poisson问题的混合变分形式的弱解在一定光滑条件下是古典解
+		
+		Poisson问题：
+		$$\begin{cases}
+			\mathbf{p} - \nabla u = 0 \\
+			div \mathbf{p} = - f \\
+			u |_{\partial \Omega} = 0
+		\end{cases}$$
+		
+		混合变分形式：
+		求$(\mathbf{p},u)\in H(\mathrm{div},\Omega)\times L^2(\Omega)$,使
+		
+		$$\begin{cases}
+			\int_\Omega \mathbf{p}\cdot\mathbf{q} dx + \int_\Omega div\mathbf{q} u dx= 0,\quad \forall \mathbf{q} \in H(\mathrm{div},\Omega) \\
+			\int_\Omega div\mathbf{p} v dx= \int_\Omega -f v dx,\quad \forall v \in L^2(\Omega)
+		\end{cases}$$
+		
+		\begin{proof}
+			当解足够光滑，由$	\int_\Omega div\mathbf{p} v = \int_\Omega -f v dx,\quad \forall v \in L^2(\Omega) $，有
+			
+			$$	\int_\Omega (div\mathbf{p} + f) v dx =0 ,\quad \forall v \in L^2(\Omega)$$
+			
+			由$v$的任意性，得到$div\mathbf{p} + f = 0$.即$div\mathbf{p} = -f$.
+			
+			在$\int_\Omega \mathbf{p}\cdot\mathbf{q} dx + \int_\Omega div\mathbf{q} u dx= 0$中取$\forall \mathbf{q} \in H(\mathrm{div},\Omega) \cap (H_0^1(\Omega))^2$,得到
+			
+			$$\int_{\Omega} \mathbf{q}\cdot(\mathbf{p}-\nabla u) dx= 0$$
+			
+			由$\mathbf{q}$的任意性，得到$	\mathbf{p} - \nabla u = 0$.
+			
+			再在$\int_\Omega \mathbf{p}\cdot\mathbf{q} dx + \int_\Omega div\mathbf{q} u = 0$中取$\forall \mathbf{q} \in H(\mathrm{div},\Omega)$,得到
+			
+			$$\int_{\partial \Omega} u \mathbf{q}\cdot\mathbf{n} ds= 0$$
+			
+			由$\mathbf{q}$的任意性，得到$	u |_{\partial \Omega} = 0$.
+		\end{proof}
+		\item 推导Stokes问题的混合变分形式
+		
+	
+		Stokes问题:
+		
+		$$\begin{cases}-\Delta\mathbf{u}+\nabla p=\mathbf{f},\text{在}\Omega\text{内}\\\operatorname{div}\mathbf{u}=0,\text{在}\Omega\text{内}\\\mathbf{u}|_{\partial\Omega}=0\end{cases}$$
+		
+		\begin{proof}
+			在$-\Delta\mathbf{u}+\nabla p=\mathbf{f}$中，对$\forall \mathbf{v} \in (H_0^1(\Omega))^2$有
+			
+			$$\int_\Omega -\Delta \mathbf{u} \cdot \mathbf{v} + \nabla p \mathbf{v} dx = \int_{\Omega} \mathbf{f} \mathbf{v} dx$$
+			
+			利用两次Green公式和$\mathbf{v}|_{\partial\Omega}=\frac{\partial \mathbf{v}}{\partial \mathbf{n}}|_{\partial\Omega}=0$以及散度积分公式可得
+				
+			$$\int_\Omega \nabla \mathbf{u} : \nabla \mathbf{v} + div\mathbf{v} p  dx = \int_{\Omega} \mathbf{f} \mathbf{v} dx$$
+			
+			在$div\mathbf{u}=0$中，对$\forall q \in L_0^2(\Omega)$，有
+			
+			$$\int_{\Omega} div\mathbf{u} q dx = 0$$
+			
+			得到混合变分形式.
+		\end{proof}
+		\item 证明inf-sup条件的定理中(3)等价于(1)和(2). 
+		
+		\begin{proof}
+			已有(1) $\Leftrightarrow$ (2).
+			
+			(2) $\Rightarrow$ (3):
+			
+			假设 (2) 成立，则对给定的$u\in U^\perp$,定义函数$g\in U^\prime$如下
+			
+			
+			\begin{equation}\tag{$\ast$} \label{eq1}
+				g(w)=(u,w),\quad\forall w\in U
+			\end{equation}
+				
+			容易验证$g\in U^0$,又因为$B^\prime$是$V$到$U^0$的同构，故存在$\lambda\in V$,使
+			
+			\begin{equation}\tag{$\star$} \label{eq2}
+				b(w,\lambda)=(w,B'\lambda)=g(w)
+			\end{equation}
+			
+			又由$\eqref{eq1}$易证$||g||_{U^{\prime}}=||u||_{U}$,从而
+			$$||u||_U=||g||_{U'}=||B'\lambda||_{U'}\geq\beta||\lambda||_V.$$
+			
+			在$\eqref{eq2}$中令$w=u$,则有
+			$$\sup\limits_{v\in V}\frac{b(u,v)}{||v||_V}\geq\frac{b(u,\lambda)}{||\lambda||_V}=\frac{(u,u)}{||\lambda||_V}\geq\beta||u||_U,$$
+			从而$B:U^{\perp}\to V^{\prime}$满足Babuška定理的三个条件，故$B$是一个同构映射.
+			
+			(3) $\Rightarrow$ (1):
+			
+			因 (3) 成立，故$B:U^\perp\to V^{\prime}$是一个同构，对给定的$v\in V$,
+			$$\begin{aligned}||v||_{V}&=\sup_{g\in V^{\prime}}\frac{\langle g,v\rangle}{||g||_{V^{\prime}}}=\sup_{u\in U^{\perp}}\frac{\langle Bu,v\rangle}{||Bu||_{V^{\prime}}}\\&=\sup_{u\in U^{\perp}}\frac{b(u,v)}{||Bu||_{V^{\prime}}}\leq\sup_{u\in U^{\perp}}\frac{b(u,v)}{\beta||u||_{U}}\leq\frac{1}{\beta}\sup_{u\in U}\frac{b(u,v)}{||u||_{U}},\end{aligned}$$
+			从而 (1)成立，证毕.
+			
+			
+		\end{proof}
+		\item 如果$\dim U_h= \dim V_h$, 离 散 的 inf-sup条 件 
+		$$\inf_{u_h\in U_h}\sup_{v_h\in V_h}\frac{b(u_h,v_h)}{\|u_h\|_U\|v_h\|_V}=\beta_h>0$$
+		成立.说明离散问题：求$u_h\in U_h$使得
+		$$b(u_h,v_h)=\langle f,v\rangle_{V^{\prime}\times V}$$
+		存在唯一解.
+		
+		(注：该结果说明对于离散问题只需验证Babuška定理中(b)对应的离
+		散形式和维数相等，无需验证(c)的离散形式) 
+		
+		\begin{proof}
+			感觉是不是少条件，等我问问老师
+		\end{proof}
+		\item 证明$H(div,\Omega)$空间在范数$\|\cdot\|_{div,\Omega}$下是完备的
+		
+		$$\|\cdot\|_{div,\Omega} \coloneqq (\|\cdot\|_{L^2(\Omega)}^2 + \|div(\cdot)\|_{L^2(\Omega)}^2)^{\frac{1}{2}}$$
+		
+		\begin{proof}
+			设 $\{u_m=(u^1,\cdots,u^n)\}_{m\in\mathbb{N}}$ 是 $(H(div,\Omega),\|\cdot\|_{div,\Omega})$ 中的Cauchy列。
+			
+			对于 $i\in\{1,\cdots,n\}$，有
+			
+			$$(u_m^i-u_l^i,u_m^i-u_l^i)=\left\|u_m^i-u_l^i\right\|_{L^2(\Omega)}^2\leq\left\|u_m-u_l\right\|_{div,\Omega}^2$$
+			
+			由于$\{u_m\}_{m\in\mathbb{N}}$是$(H(div,\Omega),\|\cdot\|_{div,\Omega})$ 中的Cauchy列，有 $\{u_m^i\}_{m\in\mathbb{N}}$ 是 $L^2(\Omega)$ 中的Cauchy列。由于 $L^2(\Omega)$ 的完备性，有 $u_m^i\to u^i\in L^2(\Omega), \quad m\to\infty$.因此$u=(u^1,\cdots,u^n)\in\{L^2(\Omega)\}^n$
+			
+			类似地,
+			$$
+			(\mathrm{div}\:(u_m-u_l),\mathrm{div}\:(u_m-u_l))_{L^2(\Omega)}=\left\|\mathrm{div}\:u_m-\mathrm{div}\:u_l\right\|_{L^2(\Omega)}^2\leq\left\|u_m-u_l\right\|_{H(div,\Omega)}^2
+			$$
+			因此 $\{\mathrm{div} \:u_m\}_{m\in\mathbb{N}}$ 在 $L^2(\Omega)$ 中是Cauchy列。由于 $L^2(\Omega)$ 的完备性，有$\mathrm{div} u_m\to g\in L^2(\Omega), \quad m\to\infty$
+			
+			下面只需要说明$div u = g$,这等价于证明$\int_\Omega g\phi dx=-\int_\Omega u\cdot\nabla\phi dx,\quad \forall \phi\in C_0^\infty(\Omega).$
+			
+			事实上，只需注意到
+			
+			$$\int_{\Omega}\phi\operatorname{div}u_{m} dx=-\int_{\Omega}u_{m}\cdot\nabla\phi dx.$$
+			$$\operatorname{div}u_{m}\to g\mathrm{~in~}\|\cdot\|_{L^{2}(\Omega)}\implies\int_{\Omega}\phi\operatorname{div}u_{m} dx\to\int_{\Omega}\phi g dx$$
+			$$u_{m}\to u\mathrm{~in~}\|\cdot\|_{L^{2}(\Omega)}\implies\int_{\Omega}u_{m}\cdot\nabla\phi dx\to\int_{\Omega}u\cdot\nabla\phi dx.$$
+			
+			即可得到。
+		\end{proof}
+		
+		
+	\end{enumerate}
+	
+	
+\end{document}
+
