@@ -29,13 +29,13 @@
 		\begin{proof}
 			记 $\|a\|_p\triangleq (\sum_{m=1}^\infty a_m^p)^{1/p}$. 即证$\|a\|_p \leq \|a\|_q$
 			
-			对$p \leq \infty$,有$\|a\|_p = (\sum_{m=1}^\infty a_m^p)^{1/p} \geq \max a_m = \|a\|_\infty$.
+			对$q \leq \infty$,有$\|a\|_q = (\sum_{m=1}^\infty a_m^q)^{1/q} \geq \max a_m = \|a\|_\infty$.
 			
-			因此,有$|a_m|^q=|a_m|^p|a_m|^{q-p}\leq|a_m|^p  \|a\|_\infty^{q-p} \leq|a_m|^p\|a\|_p^{q-p}$
+			因此,有$|a_m|^p=|a_m|^q|a_m|^{p-q}\leq|a_m|^q  \|a\|_\infty^{p-q} \leq|a_m|^q\|a\|_q^{p-q}$
 			
-			对上式求和，得到$\sum_{m=1}^\infty a_m^q \leq \|a\|_p^{q-p} \sum_{m=1}^\infty a_m^p$
+			对上式求和，得到$\sum_{m=1}^\infty a_m^p \leq \|a\|_q^{p-q} \sum_{m=1}^\infty a_m^q$
 			
-			两端同时开$q$次方即可.
+			两端同时开$p$次方即可.
 		\end{proof}
 		\item 设$\{a_m\}_{m=1}^M$是有限非负序列.证明如果$p<q\leq\infty$,则有
 		$$(\sum_{m=1}^Ma_m^p)^{1/p}\leq M^{1/p-1/q}(\sum_{m=1}^Ma_m^q)^{1/q}\text{ 如果}q<\infty$$
