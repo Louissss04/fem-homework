@@ -126,7 +126,24 @@
 		散形式和维数相等，无需验证(c)的离散形式) 
 		
 		\begin{proof}
-			感觉是不是少条件，等我问问老师
+			定义算子$B$以及对偶算子$B^\prime$
+			$$
+			B:U\to V^{\prime}<Bu,v>_{V^{\prime}\times V}=b(u,v)\quad\forall u\in U,v\in V$$
+			$$B^{\prime}:V\to U^{\prime}<B^{\prime}v,u>_{U^{\prime}\times U}=b(u,v)\quad\forall u\in U,v\in V.
+			$$
+			
+			当$\dim U= \dim V$时，根据闭值域定理,算子$B$有连续逆算子${B}^{-1} :V^\prime \rightarrow U$,$B^\prime$有连续逆算子${(B^\prime)}^{-1} :U^\prime \rightarrow V$,满足
+			
+			$$
+			\|(B')^{-1}\|=\|(B^{-1})'\|=\|B^{-1}\|
+			$$
+			
+			从而有
+			
+			$$\inf_{u_h\in U_h}\sup_{v_h\in V_h}\frac{b(u_h,v_h)}{\|u_h\|_U\|v_h\|_V}=\inf_{v_h\in V_h}\sup_{u_h\in U_h}\frac{b(u_h,v_h)}{\|u_h\|_U\|v_h\|_V}=\beta_h>0$$
+			
+			从而(b)与(b')成立，进而可以推出(b)与(c)成立.
+			
 		\end{proof}
 		\item 证明$H(div,\Omega)$空间在范数$\|\cdot\|_{div,\Omega}$下是完备的
 		
