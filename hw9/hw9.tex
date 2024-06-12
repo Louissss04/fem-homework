@@ -1,0 +1,114 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm,mathtools}
+\usepackage{amsfonts}
+\usepackage[longend,ruled,linesnumbered]{algorithm2e}
+\usepackage{fancyhdr}
+\usepackage{ctex}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+
+\begin{document}
+	
+	\noindent
+	
+	\section*{2024.06.03}	
+	
+	\begin{enumerate}
+		
+		\item 验证Stokes问题的inf-sup条件证明中$\mathbf{v}_2$满足
+		$$\mathrm{div} \mathbf{v}_2=0,\:\mathbf{v}_2\cdot\nu|_{\partial\Omega}=0,\:\mathbf{v}_2\cdot\tau|_{\partial\Omega}=-\mathbf{v}_1\cdot\tau|_{\partial\Omega}$$
+		
+		\begin{proof}
+			$$\mathrm{div} \  v_2 = \mathrm{div} \ \mathrm{curl} \psi = \frac{\partial^2 \psi}{\partial x_1 \partial x_2} - \frac{\partial^2 \psi}{\partial x_2 \partial x_1} = 0  $$
+			$$\mathbf{v}_2\cdot\nu|_{\partial\Omega}=\mathrm{curl} \cdot \nu|_{\partial \Omega}=\nabla \psi \cdot \tau |_{\partial \Omega}=\frac{\partial \psi}{\partial \tau} |_{\partial\Omega}=0$$
+			$$\mathbf{v}_2\cdot\tau|_{\partial\Omega}=\mathrm{curl} \psi \cdot \tau|_{\partial\Omega}=\nabla \psi \cdot \nu |_{\partial\Omega}=- \frac{\partial \psi}{\partial \nu}|_{\partial \Omega}=-\mathbf{v}_1\cdot\tau|_{\partial\Omega}$$
+		\end{proof}
+		
+		\item 证明在$P_2-P_0$元分析中构造的插值算子$\Pi_h^{2}$满足以下三条性质
+		
+		\begin{enumerate}
+			\item $\Pi _{h}^{2}v\in H_{0}^{1}( \Omega )$, $\forall v\in H_{0}^{1}( \Omega )$
+			
+			\begin{proof}
+				由$v \in H^1(\Omega)$,可得$\Pi_h^2 v$在公共边两个端点处连续(=0)，在公共边积分值连续($\int_{e_i} \Pi_h^2 v ds= \int_{e_i} v ds$).
+				
+				由$\Pi_h^2 v|_K \in P_2(K)$,可得$\Pi_h^2 v$在公共边上连续，即$\Pi_h^2 v \in H^1(\Omega)$.
+				
+				类似的，由$v \in H_0^1(\Omega)$,可得$\Pi_h^2 v$在边界为0，即$\Pi_h^2 v \in H_0^1(\Omega)$.
+			\end{proof}
+			
+			\item $ \left \| \Pi _h^2v\right \| _{0, K}\leq C\left ( \left \| v\right \| _{0, K}+ h_K\left | v\right | _{1, K}\right )$, $\forall v\in H_0^1( \Omega )$.
+			
+			\begin{proof}
+				通过尺度变换技巧变换到参考单元：
+				$$|\Pi_{h}^2{v}|_{1,K}=|\widehat{\Pi_{h}^2{v}}|_{1,\hat{K}}\leq C||\hat{v}||_{1,\hat{K}}\leq C(h_{K}^{-1}|{v}|_{0,K}+|{v}|_{1,K}).$$
+				再利用逆估计得到结果.
+			\end{proof}
+			
+			\item $b(\Pi_h^2\mathbf{v},q_h)=b(\mathbf{v},q_h),\:\forall q_h\in Q_h$
+			
+			\begin{proof}
+				由$\Pi_h^2 v$的定义有
+				\begin{equation*}
+					\begin{aligned}
+						&\int_e (v-\Pi_h v) \cdot \nu q_h ds=0, \quad \forall e \in \partial K \\
+						\Rightarrow & \int_{\partial K} (v-\Pi_h v) \cdot \nu q_h ds=0 \\
+						\Rightarrow & \int_K \mathrm{div}(v-\Pi_{h}v) q_h dx = 0, \quad \forall K \subset \Gamma_h \\
+						\Rightarrow & \int_{\Omega} \mathrm{div}(v-\Pi_{h}v) q_h dx = 0 \\
+						\Rightarrow & b(v-\Pi_{h}v,q_h) = 0		
+					\end{aligned}
+				\end{equation*}
+				
+			\end{proof}
+		\end{enumerate}
+	
+		\item 证明Stokes离散问题的分析中构造的Fortin插值$\Pi_h$满足误差估计
+		$$\left\|\mathbf{u}-\Pi_h\mathbf{u}\right\|_{1,\Omega}\leq Ch\left|u\right|_{2,\Omega}$$
+		思考当$u\in H^3(\Omega)$时，是否有
+		$$\left\|\mathbf{u}-\Pi_h\mathbf{u}\right\|_{1,\Omega}\leq Ch^2\left|u\right|_{3,\Omega}$$
+		
+		\begin{proof}
+			由$\Pi_h$的有界性，利用投影算子仿照局部插值误差估计证明过程即可.
+			
+			即利用
+			
+			$$\|v-\Pi_h v\|_{i,p,K}\leq C\left\|B^{-1}\right\|^i|\det B|^{1/p}\left\|\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{i,p,\widehat{K}}$$
+			
+			\begin{equation*}
+				\begin{aligned}\left\|\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{i,p,\widehat{K}}&\leq\left\|\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{m,p,\widehat{K}}\quad(\text{参考单元上范数等价})\\&\leq\left\|\widehat{v}-P_{m-1}\widehat{v}\right\|+\left\|P_{m-1}\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{m,p,\widehat{K}}\\&=\left\|\widehat{v}-P_{m-1}\widehat{v}\right\|+\left\|\Pi_{\widehat{h}}(P_{m-1}\widehat{v}-\widehat{v})\right\|_{m,p,\widehat{K}}\\&\leq(1+\sigma(\widehat{K}))C(m,n,\widehat{\gamma})\left|\widehat{v}\right|_{m,p,\widehat{K}}\\&\leq(1+\sigma(\widehat{K}))C(m,n,\widehat{\gamma})\left\|B\right\|^{m}|\det B|^{-1/p}|v|_{m,p,K}\end{aligned}
+			\end{equation*}
+			
+			再结合网格正则性得到插值误差估计.
+		\end{proof}
+		\item 证明$P_1-P_0$元不满足离散的LBB条件.(Hint: 可通过数维数的方法
+		导出这时$\dim V_h < \dim Q_h$,从而说明存在$q_h\in Q_h$使
+		得$b(v_h,q_h)=0.\forall v_h\in V_h)$	
+		
+		\begin{proof}
+			对于给定的剖分，记$t$为三角形数量，$v_I$为内部顶点数量，$v_B$为边界定点数量.由欧拉公式，有$t=2v_I+v_B-2$.
+			
+			由空间定义，我们有$\dim V_h = 2 v_I, \dim Q_h = t-1$.
+			
+			定义算子$B_h:V_h\rightarrow {Q_h}^\prime$,使得$\int_{\Omega}(B_h({v}_h)-\nabla\cdot{v}_h)q_h {d}x=0, \quad \forall q_h \in Q_h$,并记其对偶算子为$B_h^\top:Q_h \rightarrow {V_h}^\prime$.
+			
+			当$v_B > 3$时，有
+			$$\dim(\ker(B_h^\top)) =\dim(Q_{h})-\dim(\mathrm{im}(B_{h}^{\top}))\geq\dim(Q_{h})-\dim(V_{h})=t-1-2v_I=v_B-3>0$$
+			
+			从而存在$q_h\in Q_h$使
+			得$b(v_h,q_h)=0.\forall v_h\in V_h$	
+		\end{proof}
+		
+	\end{enumerate}
+	
+	
+\end{document}
+
