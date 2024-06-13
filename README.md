@@ -2,6 +2,8 @@
 
 ## 最近更新
 
+更新了hw9
+
 如果本仓库内容帮到了各位同学，欢迎通过 email/发起Issues/点亮右上角star…… 让我知道~
 
 修改了hw5q1的笔误，pq写反了。被老师发现大家抄了错误答案:(
@@ -18,13 +20,13 @@
 
 如果本仓库内容帮到了各位同学，欢迎通过 email/发起Issues/点亮右上角star…… 让我知道~
 
-本仓库matlab程序是基于chenlong的ifem包运行的，亦可使用weihuayi的python包fealpy(个人觉得暂时不太成熟，说明文档做的不太完善)
+本仓库matlab程序是基于chenlong的`ifem`包运行的，亦可使用weihuayi的python包`fealpy`(个人觉得暂时不太成熟，说明文档做的不太完善)
 
 ## ifem的安装与使用
 
 [下载ifem](https://github.com/lyc102/ifem)
 
-下载到本地，运行setpath.m.
+下载到本地，运行`setpath.m`.
 
 [ifem说明文档](https://www.math.uci.edu/~chenlong/ifemdoc/introduction.html)
 
