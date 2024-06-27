@@ -77,17 +77,21 @@
 		$$\left\|\mathbf{u}-\Pi_h\mathbf{u}\right\|_{1,\Omega}\leq Ch^2\left|u\right|_{3,\Omega}$$
 		
 		\begin{proof}
-			由$\Pi_h$的有界性，利用投影算子仿照局部插值误差估计证明过程即可.
+			$$u - \Pi_h u = u- \Pi_h^1 u - \Pi_h^2(u-\Pi_h^1 u)$$
+			其中$\Pi_h^1$ 为Scott-Zhang插值.有
+			$$\|u-\Pi_h u\|_{1,\Omega}\leq\|u-\Pi_h^1 u\|_{1,\Omega}+\|\Pi_h^2 (u-\Pi_h^1 u)\|_{1,\Omega}$$
+			对于第一项，利用Scott-Zhang插值误差结果
+			$$\|u-\Pi_h^1 u\|_{1,\Omega} \leq ch|u|_{2,\Omega}$$
+			对第二项，利用逆估计
+			$$\|\Pi_h^2 (u-\Pi^1_u)\|_{1,K} \leq C h_K^{-1} \|\Pi_h^2(u-\Pi_h^1 u)\|_{0,K} \leq Ch_K^{-1}(\|u-\Pi_h^1 u\|_{0,K}+h_K|u-\Pi_h^1 u|_{1,K}) $$
+			再利用Scott-Zhang插值误差结果
+			$$\|u-\Pi_h^1 u\|_{0,\Omega}\leq Ch^2|u|_{2,\Omega}$$
+			故$$\|\Pi_h^2 (u-\Pi_h^1 u)\|_{1,\Omega}\leq Ch|u|_{2,\Omega}$$
+			因此
+			$$\left\|u-\Pi_h u\right\|_{1,\Omega}\leq Ch\left|u\right|_{2,\Omega}$$
 			
-			即利用
+			当$u\in H^3(\Omega)$时，证明方法类似.
 			
-			$$\|v-\Pi_h v\|_{i,p,K}\leq C\left\|B^{-1}\right\|^i|\det B|^{1/p}\left\|\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{i,p,\widehat{K}}$$
-			
-			\begin{equation*}
-				\begin{aligned}\left\|\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{i,p,\widehat{K}}&\leq\left\|\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{m,p,\widehat{K}}\quad(\text{参考单元上范数等价})\\&\leq\left\|\widehat{v}-P_{m-1}\widehat{v}\right\|+\left\|P_{m-1}\widehat{v}-\Pi_{\widehat{h}}\widehat{v}\right\|_{m,p,\widehat{K}}\\&=\left\|\widehat{v}-P_{m-1}\widehat{v}\right\|+\left\|\Pi_{\widehat{h}}(P_{m-1}\widehat{v}-\widehat{v})\right\|_{m,p,\widehat{K}}\\&\leq(1+\sigma(\widehat{K}))C(m,n,\widehat{\gamma})\left|\widehat{v}\right|_{m,p,\widehat{K}}\\&\leq(1+\sigma(\widehat{K}))C(m,n,\widehat{\gamma})\left\|B\right\|^{m}|\det B|^{-1/p}|v|_{m,p,K}\end{aligned}
-			\end{equation*}
-			
-			再结合网格正则性得到插值误差估计.
 		\end{proof}
 		\item 证明$P_1-P_0$元不满足离散的LBB条件.(Hint: 可通过数维数的方法
 		导出这时$\dim V_h < \dim Q_h$,从而说明存在$q_h\in Q_h$使
